@@ -1,6 +1,6 @@
 # besu-native-ec
 
-This C library is a wrapper for OpenSSL elliptic curve signature implementations.
+Besu Elliptic Curve Native Library. This C library is a wrapper for OpenSSL elliptic curve signature implementations.
 
 ## Prerequisites
 
