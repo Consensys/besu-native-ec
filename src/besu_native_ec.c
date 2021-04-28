@@ -5,7 +5,7 @@
 #include "openssl/include/openssl/err.h"
 #include "openssl/include/openssl/param_build.h"
 
-#include "crypto_signature.h"
+#include "besu_native_ec.h"
 
 static const uint8_t P256_PUBLIC_KEY_LENGTH = 64;
 static const uint8_t P256_SIGNATURE_LENGTH = 64;

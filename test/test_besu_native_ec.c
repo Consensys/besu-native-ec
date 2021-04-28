@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "crypto_signature.h"
+#include "besu_native_ec.h"
 #include "unity.h"
 
 unsigned char *hex_to_bin(const char *hex_string) {
