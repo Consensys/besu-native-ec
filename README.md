@@ -33,7 +33,7 @@ After cloning the project you need to initialize the Git submodule which points 
 This needs to be done only once.
 
 ## Building
-To build the library and execute the test execute
+To compile the library after any changes and execute the test execute
 ```
 ./build.sh
 ```
