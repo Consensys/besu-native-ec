@@ -15,15 +15,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#pragma once
+#include <stdio.h>
+#include <string.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "openssl/include/openssl/err.h"
 
-#include "ec_verify.h"
+#include "utils.h"
 
-#ifdef __cplusplus
-extern
+void set_error_message(char *error_message, const char *message_prefix) {
+  snprintf(error_message, 256, "%s: %s\n", message_prefix,
+           ERR_error_string(ERR_get_error(), NULL));
 }
-#endif
+
+unsigned char *hex_to_bin(const char *hex_string) {
+  int hex_string_len = strlen((char *)hex_string);
+  unsigned char *byte_array =
+      malloc(hex_string_len / 2 * (sizeof(unsigned char)));
+
+  for (int i = 0; i < (hex_string_len / 2); i++) {
+    sscanf(hex_string + 2 * i, "%02x", (unsigned int *)&byte_array[i]);
+  }
+
+  return byte_array;
+}
