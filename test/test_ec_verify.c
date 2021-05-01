@@ -37,8 +37,6 @@ void p256_verify_should_verify_signatures_according_to_test_vectors(void) {
   const EVP_MD *md = NULL;
 
   for (int i = 0; i < test_vectors_len; i++) {
-    printf("Round %d\n", i);
-
     switch (test_vectors[i].hash_function_id) {
     case SHA_224:
       md = md_sha224;
@@ -77,6 +75,7 @@ void p256_verify_should_verify_signatures_according_to_test_vectors(void) {
   EVP_MD_free((EVP_MD *)md_sha224);
   EVP_MD_free((EVP_MD *)md_sha256);
   EVP_MD_free((EVP_MD *)md_sha384);
+  EVP_MD_free((EVP_MD *)md_sha512);
 }
 
 int main(void) {
