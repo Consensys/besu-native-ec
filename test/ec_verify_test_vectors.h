@@ -35,7 +35,7 @@ struct test_vector {
 // https://csrc.nist.gov/groups/STM/cavp/documents/dss/186-3ecdsatestvectors.zip
 //
 // The following sets have been copied from SigVer.rsp:
-// [P-256,SHA-256]
+// [P-256,SHA-224], [P-256,SHA-256], [P-256,SHA-384], [P-256,SHA-512]
 struct test_vector test_vectors[] = {
     {.data =
          {"3a9fd6b13337d9fd995d6e011e41c0bd24a7b068e8caa2f8ba10cb5b852e4f82c2d5"

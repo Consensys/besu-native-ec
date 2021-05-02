@@ -52,9 +52,6 @@ int create_der_encoded_signature(unsigned char **der_encoded_signature,
                                  char *error_message,
                                  const char *signature_r_hex,
                                  const char *signature_s_hex);
-
-void set_error_message(char *buffer, const char *message_prefix);
-
 #ifdef __cplusplus
 extern
 }
