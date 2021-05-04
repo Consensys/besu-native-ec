@@ -15,13 +15,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#include <stdlib.h>
+
 #include "unity.h"
 
 #include "utils.h"
 
 void hex_to_bin_should_return_correct_byte_array(void) {
   unsigned char expected_array[] = {0x1f, 0xe4, 0x76};
-  TEST_ASSERT_EQUAL_CHAR_ARRAY(expected_array, hex_to_bin("1fe476"), 3);
+  unsigned char *actual_array = hex_to_bin("1fe476");
+
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(expected_array, actual_array, 3);
+
+  free(actual_array);
 }
 
 int main(void) {
