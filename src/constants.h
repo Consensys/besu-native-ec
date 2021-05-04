@@ -15,14 +15,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#include <stdint.h>
+
 #pragma once
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "ec_sign.h"
-#include "ec_verify.h"
+extern const int8_t SUCCESS;
+extern const int8_t FAILURE;
+extern const int8_t GENERIC_ERROR;
 
 #ifdef __cplusplus
 extern
