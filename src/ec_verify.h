@@ -17,8 +17,6 @@
  */
 #include <stdint.h>
 
-#include "openssl/include/openssl/evp.h"
-
 #pragma once
 
 #ifdef __cplusplus
@@ -42,10 +40,6 @@ struct verify_result verify(const unsigned char *data_hash,
                             const char *signature_s_hex,
                             const unsigned char public_key_data[],
                             const char *group_name, uint8_t public_key_len);
-
-int create_key(EVP_PKEY **key, char *error_message,
-               const unsigned char public_key_data[], const char *group_name,
-               uint8_t public_key_len);
 
 int create_der_encoded_signature(unsigned char **der_encoded_signature,
                                  int *der_encoded_signature_len,

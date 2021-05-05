@@ -15,14 +15,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "openssl/include/openssl/evp.h"
+
 #pragma once
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "ec_sign.h"
-#include "ec_verify.h"
+int create_private_key(EVP_PKEY **key, char *error_message,
+                       const unsigned char private_key_data[],
+                       uint8_t private_key_len, const char *group_name);
+
+int create_public_key(EVP_PKEY **key, char *error_message,
+                      const unsigned char public_key_data[],
+                      uint8_t public_key_len, const char *group_name);
+
+int create_key(EVP_PKEY **key, char *error_message, const char *group_name,
+               OSSL_PARAM_BLD *param_bld);
 
 #ifdef __cplusplus
 extern

@@ -15,16 +15,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#pragma once
+#include "constants.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "ec_sign.h"
-#include "ec_verify.h"
-
-#ifdef __cplusplus
-extern
-}
-#endif
+const int8_t SUCCESS = 1;
+const int8_t FAILURE = 0;
+const int8_t GENERIC_ERROR = -1;
