@@ -49,12 +49,14 @@ struct verify_result verify(const unsigned char *data_hash,
                                  .error_message = {0}};
 
   EVP_PKEY *key = NULL;
+  unsigned char *der_encoded_signature = NULL;
+  EVP_PKEY_CTX *verify_context = NULL;
+
   if (create_key(&key, result.error_message, public_key_data, group_name,
                  public_key_len) != SUCCESS) {
     goto end;
   }
 
-  unsigned char *der_encoded_signature = NULL;
   int der_encoded_signature_len = 0;
   if (create_der_encoded_signature(
           &der_encoded_signature, &der_encoded_signature_len,
@@ -63,7 +65,6 @@ struct verify_result verify(const unsigned char *data_hash,
     goto end;
   }
 
-  EVP_PKEY_CTX *verify_context = NULL;
   if ((verify_context = EVP_PKEY_CTX_new(key, NULL)) == NULL) {
     set_error_message(result.error_message,
                       "Could not create a context for verifying: ");
