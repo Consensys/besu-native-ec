@@ -15,15 +15,29 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#pragma once
+#include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "unity.h"
 
-#include "ec_verify.h"
+#include "utils.h"
 
-#ifdef __cplusplus
-extern
+void hex_to_bin_should_return_correct_byte_array(void) {
+  unsigned char expected_array[] = {0x1f, 0xe4, 0x76};
+  unsigned char *actual_array = hex_to_bin("1fe476");
+
+  TEST_ASSERT_EQUAL_CHAR_ARRAY(expected_array, actual_array, 3);
+
+  free(actual_array);
 }
-#endif
+
+int main(void) {
+  UNITY_BEGIN();
+
+  RUN_TEST(hex_to_bin_should_return_correct_byte_array);
+
+  return UNITY_END();
+}
+
+void setUp(void) {}
+
+void tearDown(void) {}
