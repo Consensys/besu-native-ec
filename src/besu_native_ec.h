@@ -21,6 +21,7 @@
 extern "C" {
 #endif
 
+#include "ec_key_recovery.h"
 #include "ec_sign.h"
 #include "ec_verify.h"
 
