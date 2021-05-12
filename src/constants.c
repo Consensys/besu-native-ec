@@ -22,3 +22,4 @@ const int8_t FAILURE = 0;
 const int8_t GENERIC_ERROR = -1;
 
 const int MAX_SIGNATURE_BUFFER_LEN = 263;
+const int MAX_PUBLIC_KEY_BUFFER_LEN = 263;

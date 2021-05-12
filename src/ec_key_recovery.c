@@ -239,7 +239,14 @@ struct key_recovery_result key_recovery(const unsigned char *data_hash,
   // do not copy the first byte (two hex values), because it is always 0x04
   // to indicate that it is an uncompressed public key format
   const char *Q_hex_after_format_identifier = Q_hex + 2;
-  strncpy(result.public_key, Q_hex_after_format_identifier, 263);
+
+  size_t public_key_len = strlen(Q_hex_after_format_identifier);
+  if (public_key_len >= MAX_PUBLIC_KEY_BUFFER_LEN) {
+    set_error_message(result.error_message,
+                      "Recovered public key is too long for its buffer: ");
+    goto end;
+  }
+  memcpy(result.public_key, Q_hex_after_format_identifier, public_key_len + 1);
 
 end:
   EC_GROUP_free(group);
