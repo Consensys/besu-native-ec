@@ -27,6 +27,9 @@ extern const int8_t SUCCESS;
 extern const int8_t FAILURE;
 extern const int8_t GENERIC_ERROR;
 
+extern const int MAX_PUBLIC_KEY_BUFFER_LEN;
+extern const int MAX_SIGNATURE_BUFFER_LEN;
+
 #ifdef __cplusplus
 extern
 }

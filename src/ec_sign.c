@@ -59,8 +59,22 @@ struct sign_result sign(const unsigned char *data_hash,
     goto end;
   }
 
-  strncpy(result.signature_r, signature_r, 263);
-  strncpy(result.signature_s, signature_s, 263);
+  size_t signature_r_len = strlen(signature_r);
+  if (signature_r_len >= MAX_SIGNATURE_BUFFER_LEN) {
+    set_error_message(result.error_message,
+                      "Recovered signature_r is too long for its buffer: ");
+    goto end;
+  }
+
+  size_t signature_s_len = strlen(signature_s);
+  if (signature_s_len >= MAX_SIGNATURE_BUFFER_LEN) {
+    set_error_message(result.error_message,
+                      "Recovered signature_s is too long for its buffer: ");
+    goto end;
+  }
+
+  memcpy(result.signature_r, signature_r, signature_r_len + 1);
+  memcpy(result.signature_s, signature_s, signature_s_len + 1);
 
 end:
   EVP_PKEY_free(key);
