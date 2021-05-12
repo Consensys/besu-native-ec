@@ -30,7 +30,7 @@ BUILD_PATHS = $(PATHB) $(PATHD) $(PATHO) $(PATHR)
 
 SRCT = $(wildcard $(PATHT)*.c)
 
-COMPILE=gcc -c -Wall -Werror -std=c11 --debug
+COMPILE=gcc -c -Wall -Werror -std=c11 -O3 -fPIC -lC
 LINK=gcc -L$(PATH_OPENSSL) -Wl,-rpath=$(PATH_OPENSSL)
 DEPEND=gcc -MM -MG -MF
 CFLAGS=-I. -I$(PATHU) -I$(PATHS) -I$(PATH_OPENSSL_INCLUDE) -DTEST
@@ -60,13 +60,13 @@ $(PATHB)test_%.$(TARGET_EXTENSION): $(PATHO)test_%.o $(PATHO)%.o $(PATHU)unity.o
 	$(LINK) -o $@ $^ -lcrypto
 
 $(PATHO)%.o:: $(PATHT)%.c
-	$(COMPILE) $(CFLAGS) $< -o $@
+	$(COMPILE) --debug $(CFLAGS) $< -o $@
 
 $(PATHO)%.o:: $(PATHS)%.c
-	$(COMPILE) $(CFLAGS) $< -o $@
+	$(COMPILE) --debug $(CFLAGS) $< -o $@
 
 $(PATHO)%.o:: $(PATHU)%.c $(PATHU)%.h
-	$(COMPILE) $(CFLAGS) $< -o $@
+	$(COMPILE) --debug $(CFLAGS) $< -o $@
 
 $(PATHD)%.d:: $(PATHT)%.c
 	$(DEPEND) $@ $<

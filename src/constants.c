@@ -20,3 +20,5 @@
 const int8_t SUCCESS = 1;
 const int8_t FAILURE = 0;
 const int8_t GENERIC_ERROR = -1;
+
+const int MAX_SIGNATURE_BUFFER_LEN = 263;
