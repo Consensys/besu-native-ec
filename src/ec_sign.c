@@ -40,19 +40,19 @@ struct sign_result sign(const unsigned char *data_hash,
       .signature_r = {0}, .signature_s = {0}, .error_message = {0}};
 
   EVP_PKEY *key = NULL;
+  ECDSA_SIG *signature = NULL;
+  char *signature_r = NULL;
+  char *signature_s = NULL;
+
   if (create_private_key(&key, result.error_message, private_key_data,
                          private_key_len, group_name) != SUCCESS) {
     goto end;
   }
 
-  ECDSA_SIG *signature = NULL;
   if ((signature = create_signature(key, result.error_message, data_hash,
                                     data_hash_length)) == NULL) {
     goto end;
   }
-
-  char *signature_r = NULL;
-  char *signature_s = NULL;
 
   if (signature_to_hex_values(signature, result.error_message, &signature_r,
                               &signature_s) != SUCCESS) {
@@ -75,8 +75,9 @@ ECDSA_SIG *create_signature(EVP_PKEY *key, char *error_message,
                             const unsigned char *data_hash,
                             const size_t data_hash_length) {
   ECDSA_SIG *signature = NULL;
-
   EVP_PKEY_CTX *sign_context = NULL;
+  unsigned char *der_encoded_signature = NULL;
+
   if ((sign_context = EVP_PKEY_CTX_new(key, NULL)) == NULL) {
     set_error_message(error_message,
                       "Could not create a context for signing: ");
@@ -100,7 +101,6 @@ ECDSA_SIG *create_signature(EVP_PKEY *key, char *error_message,
     goto end_create_signature;
   }
 
-  unsigned char *der_encoded_signature = NULL;
   if ((der_encoded_signature = OPENSSL_malloc(der_encoded_signature_len)) ==
       NULL) {
     set_error_message(error_message,
