@@ -62,14 +62,14 @@ struct sign_result sign(const unsigned char *data_hash,
   size_t signature_r_len = strlen(signature_r);
   if (signature_r_len >= MAX_SIGNATURE_BUFFER_LEN) {
     set_error_message(result.error_message,
-                      "Recovered signature_r is too long for its buffer: ");
+                      "Created signature_r is too long for its buffer: ");
     goto end;
   }
 
   size_t signature_s_len = strlen(signature_s);
   if (signature_s_len >= MAX_SIGNATURE_BUFFER_LEN) {
     set_error_message(result.error_message,
-                      "Recovered signature_s is too long for its buffer: ");
+                      "Created signature_s is too long for its buffer: ");
     goto end;
   }
 
