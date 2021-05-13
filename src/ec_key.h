@@ -16,6 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "openssl/include/openssl/evp.h"
+#include "openssl/include/openssl/param_build.h"
 
 #pragma once
 
@@ -23,9 +24,11 @@
 extern "C" {
 #endif
 
-int create_private_key(EVP_PKEY **key, char *error_message,
-                       const unsigned char private_key_data[],
-                       uint8_t private_key_len, const char *group_name);
+int create_key_pair(EVP_PKEY **key, char *error_message,
+                    const unsigned char private_key_data[],
+                    uint8_t private_key_len,
+                    const unsigned char public_key_data[],
+                    uint8_t public_key_len, const char *group_name);
 
 int create_public_key(EVP_PKEY **key, char *error_message,
                       const unsigned char public_key_data[],
@@ -33,6 +36,10 @@ int create_public_key(EVP_PKEY **key, char *error_message,
 
 int create_key(EVP_PKEY **key, char *error_message, const char *group_name,
                OSSL_PARAM_BLD *param_bld);
+
+OSSL_PARAM_BLD *generate_public_key_param(const unsigned char public_key_data[],
+                                          uint8_t public_key_len,
+                                          unsigned char *public_key_buffer);
 
 #ifdef __cplusplus
 extern

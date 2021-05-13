@@ -15,7 +15,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,14 +24,6 @@
 #include "besu_native_ec.h"
 #include "ec_sign_test_vectors.h"
 #include "utils.h"
-
-char *to_lower_case(char *s) {
-  for (char *p = s; *p; p++) {
-    *p = tolower(*p);
-  }
-
-  return s;
-}
 
 void p256_key_recovery_should_recover_correct_public_keys(
     const EVP_MD *md, struct sign_test_vector test_vectors[],

@@ -21,41 +21,57 @@
 
 #include "constants.h"
 #include "ec_key.h"
+#include "ec_key_recovery.h"
 #include "ec_sign.h"
 #include "utils.h"
 
 struct sign_result p256_sign(const unsigned char *data_hash,
                              const size_t data_hash_length,
-                             const unsigned char private_key_data[]) {
+                             const unsigned char private_key_data[],
+                             const unsigned char public_key_data[]) {
   static const uint8_t P256_PRIVATE_KEY_LENGTH = 32;
+  static const uint8_t P256_PUBLIC_KEY_LENGTH = 64;
+
   return sign(data_hash, data_hash_length, private_key_data,
-              P256_PRIVATE_KEY_LENGTH, "prime256v1");
+              P256_PRIVATE_KEY_LENGTH, public_key_data, P256_PUBLIC_KEY_LENGTH,
+              "prime256v1", NID_X9_62_prime256v1);
 }
 
-struct sign_result sign(const unsigned char *data_hash,
-                        const size_t data_hash_length,
-                        const unsigned char private_key_data[],
-                        uint8_t private_key_len, const char *group_name) {
-  struct sign_result result = {
-      .signature_r = {0}, .signature_s = {0}, .error_message = {0}};
+struct sign_result
+sign(const unsigned char *data_hash, const size_t data_hash_len,
+     const unsigned char private_key_data[], uint8_t private_key_len,
+     const unsigned char public_key_data[], uint8_t public_key_len,
+     const char *group_name, int curve_nid) {
+  struct sign_result result = {.signature_r = {0},
+                               .signature_s = {0},
+                               .signature_v = -1,
+                               .error_message = {0}};
 
   EVP_PKEY *key = NULL;
   ECDSA_SIG *signature = NULL;
   char *signature_r = NULL;
   char *signature_s = NULL;
 
-  if (create_private_key(&key, result.error_message, private_key_data,
-                         private_key_len, group_name) != SUCCESS) {
+  if (create_key_pair(&key, result.error_message, private_key_data,
+                      private_key_len, public_key_data, public_key_len,
+                      group_name) != SUCCESS) {
     goto end;
   }
 
   if ((signature = create_signature(key, result.error_message, data_hash,
-                                    data_hash_length)) == NULL) {
+                                    data_hash_len)) == NULL) {
     goto end;
   }
 
   if (signature_to_hex_values(signature, result.error_message, &signature_r,
                               &signature_s) != SUCCESS) {
+    goto end;
+  }
+
+  // private key length and curve byte length are the same
+  if (calculate_signature_v(&result, data_hash, data_hash_len, signature_r,
+                            signature_s, public_key_data, public_key_len,
+                            private_key_len, curve_nid) != SUCCESS) {
     goto end;
   }
 
@@ -182,6 +198,54 @@ int signature_to_hex_values(const ECDSA_SIG *signature, char *error_message,
   ret = SUCCESS;
 
 end_signature_to_hex_values:
+
+  return ret;
+}
+
+int calculate_signature_v(struct sign_result *result,
+                          const unsigned char *data_hash,
+                          const size_t data_hash_len, const char *signature_r,
+                          const char *signature_s,
+                          const unsigned char public_key_data[],
+                          uint8_t public_key_len, uint8_t curve_byte_len,
+                          int curve_nid) {
+  unsigned char *recovered_public_key_data = NULL;
+
+  int ret = FAILURE;
+
+  for (int i = 0; i < 2; i++) {
+    struct key_recovery_result recovery_result =
+        key_recovery(data_hash, data_hash_len, signature_r, signature_s, i,
+                     curve_nid, curve_byte_len);
+
+    if (strlen(recovery_result.error_message) != 0) {
+      set_error_message(result->error_message, recovery_result.error_message);
+      goto end_calculate_signature_v;
+    }
+
+    recovered_public_key_data = hex_to_bin(recovery_result.public_key);
+
+    if (memcmp(public_key_data, recovered_public_key_data, public_key_len) ==
+        0) {
+      result->signature_v = i;
+      break;
+    }
+
+    free(recovered_public_key_data);
+    recovered_public_key_data = NULL;
+  }
+
+  if (result->signature_v == -1) {
+    set_error_message(result->error_message,
+                      "Could not determine signature_v: ");
+    goto end_calculate_signature_v;
+  }
+
+  ret = SUCCESS;
+
+end_calculate_signature_v:
+
+  free(recovered_public_key_data);
 
   return ret;
 }

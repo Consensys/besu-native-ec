@@ -15,26 +15,31 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#include <stdlib.h>
 #include <string.h>
 
 #include "openssl/include/openssl/core_names.h"
 #include "openssl/include/openssl/ec.h"
-#include "openssl/include/openssl/param_build.h"
 
 #include "constants.h"
 #include "ec_key.h"
 #include "utils.h"
 
-int create_private_key(EVP_PKEY **key, char *error_message,
-                       const unsigned char private_key_data[],
-                       uint8_t private_key_len, const char *group_name) {
-  BIGNUM *private_key = BN_bin2bn(private_key_data, private_key_len, NULL);
+int create_key_pair(EVP_PKEY **key, char *error_message,
+                    const unsigned char private_key_data[],
+                    uint8_t private_key_len,
+                    const unsigned char public_key_data[],
+                    uint8_t public_key_len, const char *group_name) {
+  unsigned char *public_key_buffer = malloc(public_key_len + 1);
+  OSSL_PARAM_BLD *param_bld = generate_public_key_param(
+      public_key_data, public_key_len, public_key_buffer);
 
-  OSSL_PARAM_BLD *param_bld = OSSL_PARAM_BLD_new();
+  BIGNUM *private_key = BN_bin2bn(private_key_data, private_key_len, NULL);
   OSSL_PARAM_BLD_push_BN(param_bld, OSSL_PKEY_PARAM_PRIV_KEY, private_key);
 
   int ret = create_key(key, error_message, group_name, param_bld);
 
+  free(public_key_buffer);
   BN_free(private_key);
 
   return ret;
@@ -43,17 +48,14 @@ int create_private_key(EVP_PKEY **key, char *error_message,
 int create_public_key(EVP_PKEY **key, char *error_message,
                       const unsigned char public_key_data[],
                       uint8_t public_key_len, const char *group_name) {
-  unsigned char public_key_uncompressed[public_key_len + 1];
-  public_key_uncompressed[0] = POINT_CONVERSION_UNCOMPRESSED;
-  memcpy((void *)(public_key_uncompressed + 1), public_key_data,
-         public_key_len);
+  unsigned char *public_key_buffer = malloc(public_key_len + 1);
+  OSSL_PARAM_BLD *param_bld = generate_public_key_param(
+      public_key_data, public_key_len, public_key_buffer);
 
-  OSSL_PARAM_BLD *param_bld = OSSL_PARAM_BLD_new();
-  OSSL_PARAM_BLD_push_octet_string(param_bld, OSSL_PKEY_PARAM_PUB_KEY,
-                                   public_key_uncompressed,
-                                   sizeof(public_key_uncompressed));
+  int ret = create_key(key, error_message, group_name, param_bld);
 
-  return create_key(key, error_message, group_name, param_bld);
+  free(public_key_buffer);
+  return ret;
 }
 
 int create_key(EVP_PKEY **key, char *error_message, const char *group_name,
@@ -99,4 +101,17 @@ end_create_key:
   OSSL_PARAM_BLD_free(param_bld);
 
   return ret;
+}
+
+OSSL_PARAM_BLD *generate_public_key_param(const unsigned char public_key_data[],
+                                          uint8_t public_key_len,
+                                          unsigned char *public_key_buffer) {
+  public_key_buffer[0] = POINT_CONVERSION_UNCOMPRESSED;
+  memcpy((void *)(public_key_buffer + 1), public_key_data, public_key_len);
+
+  OSSL_PARAM_BLD *param_bld = OSSL_PARAM_BLD_new();
+  OSSL_PARAM_BLD_push_octet_string(param_bld, OSSL_PKEY_PARAM_PUB_KEY,
+                                   public_key_buffer, public_key_len + 1);
+
+  return param_bld;
 }
