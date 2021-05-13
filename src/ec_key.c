@@ -36,7 +36,6 @@ int create_private_key(EVP_PKEY **key, char *error_message,
   int ret = create_key(key, error_message, group_name, param_bld);
 
   BN_free(private_key);
-  OSSL_PARAM_BLD_free(param_bld);
 
   return ret;
 }
@@ -54,11 +53,7 @@ int create_public_key(EVP_PKEY **key, char *error_message,
                                    public_key_uncompressed,
                                    sizeof(public_key_uncompressed));
 
-  int ret = create_key(key, error_message, group_name, param_bld);
-
-  OSSL_PARAM_BLD_free(param_bld);
-
-  return ret;
+  return create_key(key, error_message, group_name, param_bld);
 }
 
 int create_key(EVP_PKEY **key, char *error_message, const char *group_name,
@@ -101,6 +96,7 @@ int create_key(EVP_PKEY **key, char *error_message, const char *group_name,
 end_create_key:
   EVP_PKEY_CTX_free(key_context);
   OSSL_PARAM_free(params);
+  OSSL_PARAM_BLD_free(param_bld);
 
   return ret;
 }
