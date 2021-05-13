@@ -16,18 +16,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include <stdio.h>
-#include <string.h>
 
-#include "openssl/include/openssl/core_names.h"
 #include "openssl/include/openssl/ec.h"
-#include "openssl/include/openssl/param_build.h"
+#include "openssl/include/openssl/evp.h"
 
+#include "constants.h"
+#include "ec_key.h"
 #include "ec_verify.h"
 #include "utils.h"
-
-const int8_t SUCCESS = 1;
-const int8_t FAILURE = 0;
-const int8_t GENERIC_ERROR = -1;
 
 struct verify_result p256_verify(const unsigned char *data_hash,
                                  const size_t data_hash_length,
@@ -52,8 +48,8 @@ struct verify_result verify(const unsigned char *data_hash,
   unsigned char *der_encoded_signature = NULL;
   EVP_PKEY_CTX *verify_context = NULL;
 
-  if (create_key(&key, result.error_message, public_key_data, group_name,
-                 public_key_len) != SUCCESS) {
+  if (create_public_key(&key, result.error_message, public_key_data,
+                        public_key_len, group_name) != SUCCESS) {
     goto end;
   }
 
@@ -96,61 +92,6 @@ end:
   EVP_PKEY_CTX_free(verify_context);
 
   return result;
-}
-
-int create_key(EVP_PKEY **key, char *error_message,
-               const unsigned char public_key_data[], const char *group_name,
-               uint8_t public_key_len) {
-  int ret = FAILURE;
-  EVP_PKEY_CTX *key_context = NULL;
-  OSSL_PARAM_BLD *param_bld = NULL;
-  OSSL_PARAM *params = NULL;
-
-  unsigned char public_key_uncompressed[public_key_len + 1];
-  public_key_uncompressed[0] = POINT_CONVERSION_UNCOMPRESSED;
-  memcpy((void *)(public_key_uncompressed + 1), public_key_data,
-         public_key_len);
-
-  param_bld = OSSL_PARAM_BLD_new();
-  OSSL_PARAM_BLD_push_utf8_string(param_bld, OSSL_PKEY_PARAM_GROUP_NAME,
-                                  group_name, 0);
-  OSSL_PARAM_BLD_push_octet_string(param_bld, OSSL_PKEY_PARAM_PUB_KEY,
-                                   public_key_uncompressed,
-                                   sizeof(public_key_uncompressed));
-
-  if ((params = OSSL_PARAM_BLD_to_param(param_bld)) == NULL) {
-    set_error_message(error_message,
-                      "Could not create parameters for key operation: ");
-    goto end_create_key;
-  }
-
-  if ((key_context = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL)) == NULL) {
-    set_error_message(error_message,
-                      "Could not allocate memory for key context: ");
-    goto end_create_key;
-  }
-
-  if (EVP_PKEY_fromdata_init(key_context) != SUCCESS) {
-    set_error_message(error_message,
-                      "Could not initializes a context for key import: ");
-    goto end_create_key;
-  }
-
-  if (EVP_PKEY_fromdata(key_context, key, EVP_PKEY_KEYPAIR, params) !=
-      SUCCESS) {
-    set_error_message(error_message,
-                      "Could not create structure to store public key: ");
-    goto end_create_key;
-  }
-
-  ret = SUCCESS;
-
-end_create_key:
-  EVP_PKEY_CTX_free(key_context);
-  OSSL_PARAM_free(params);
-  OSSL_PARAM_BLD_free(param_bld);
-
-  return ret;
 }
 
 int create_der_encoded_signature(unsigned char **der_encoded_signature,
