@@ -15,6 +15,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -62,4 +63,12 @@ unsigned char *hex_to_bin(const char *hex_string) {
   }
 
   return data;
+}
+
+char *to_lower_case(char *s) {
+  for (char *p = s; *p; p++) {
+    *p = tolower(*p);
+  }
+
+  return s;
 }
