@@ -21,9 +21,45 @@
 extern "C" {
 #endif
 
-#include "ec_key_recovery.h"
-#include "ec_sign.h"
-#include "ec_verify.h"
+/**
+ * This header file includes all functions that are publicly exposed by
+ * the besu-native-ec library
+ */
+
+struct key_recovery_result {
+  // 131 bytes are needed for a P-521 public key
+  char public_key[131];
+  char error_message[256];
+};
+
+struct sign_result {
+  // 66 bytes are needed for one half of a P-521 signature
+  char signature_r[66];
+  char signature_s[66];
+  char signature_v;
+  char error_message[256];
+};
+
+struct verify_result {
+  int verified;
+  char error_message[256];
+};
+
+struct key_recovery_result p256_key_recovery(const char data_hash[],
+                                             const int data_hash_len,
+                                             const char signature_r[],
+                                             const char signature_s[],
+                                             const int signature_v);
+
+struct sign_result p256_sign(const char data_hash[], const int data_hash_length,
+                             const char private_key_data[],
+                             const char public_key_data[]);
+
+struct verify_result p256_verify(const char data_hash[],
+                                 const int data_hash_length,
+                                 const char signature_r[],
+                                 const char signature_s[],
+                                 const char public_key_data[]);
 
 #ifdef __cplusplus
 extern

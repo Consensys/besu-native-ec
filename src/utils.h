@@ -23,7 +23,7 @@ extern "C" {
 
 void set_error_message(char *error_message, const char *message_prefix);
 unsigned char *hex_to_bin(const char *hex_string);
-char *to_lower_case(char *s);
+char *hex_arr_to_str(const char *p, int p_len);
 
 #ifdef __cplusplus
 extern

@@ -19,16 +19,16 @@
 
 #include "openssl/include/openssl/evp.h"
 
+#include "besu_native_ec.h"
 #include "constants.h"
 #include "ec_key.h"
 #include "ec_key_recovery.h"
 #include "ec_sign.h"
 #include "utils.h"
 
-struct sign_result p256_sign(const unsigned char *data_hash,
-                             const size_t data_hash_length,
-                             const unsigned char private_key_data[],
-                             const unsigned char public_key_data[]) {
+struct sign_result p256_sign(const char data_hash[], const int data_hash_length,
+                             const char private_key_data[],
+                             const char public_key_data[]) {
   static const uint8_t P256_PRIVATE_KEY_LENGTH = 32;
   static const uint8_t P256_PUBLIC_KEY_LENGTH = 64;
 
@@ -37,11 +37,10 @@ struct sign_result p256_sign(const unsigned char *data_hash,
               "prime256v1", NID_X9_62_prime256v1);
 }
 
-struct sign_result
-sign(const unsigned char *data_hash, const size_t data_hash_len,
-     const unsigned char private_key_data[], uint8_t private_key_len,
-     const unsigned char public_key_data[], uint8_t public_key_len,
-     const char *group_name, int curve_nid) {
+struct sign_result sign(const char data_hash[], const int data_hash_len,
+                        const char private_key_data[], int private_key_len,
+                        const char public_key_data[], int public_key_len,
+                        const char *group_name, int curve_nid) {
   struct sign_result result = {.signature_r = {0},
                                .signature_s = {0},
                                .signature_v = -1,
@@ -51,20 +50,32 @@ sign(const unsigned char *data_hash, const size_t data_hash_len,
   ECDSA_SIG *signature = NULL;
   char *signature_r = NULL;
   char *signature_s = NULL;
+  int signature_len = private_key_len;
 
-  if (create_key_pair(&key, result.error_message, private_key_data,
-                      private_key_len, public_key_data, public_key_len,
+  if (signature_len >= MAX_SIGNATURE_BUFFER_LEN) {
+    set_error_message(result.error_message,
+                      "Signatures are too long for their buffers: ");
+    goto end;
+  }
+
+  signature_r = OPENSSL_malloc(signature_len);
+  signature_s = OPENSSL_malloc(signature_len);
+
+  if (create_key_pair(&key, result.error_message,
+                      (const unsigned char *)private_key_data, private_key_len,
+                      (const unsigned char *)public_key_data, public_key_len,
                       group_name) != SUCCESS) {
     goto end;
   }
 
-  if ((signature = create_signature(key, result.error_message, data_hash,
+  if ((signature = create_signature(key, result.error_message,
+                                    (const unsigned char *)data_hash,
                                     data_hash_len)) == NULL) {
     goto end;
   }
 
-  if (signature_to_hex_values(signature, result.error_message, &signature_r,
-                              &signature_s) != SUCCESS) {
+  if (signature_to_bin_values(signature, result.error_message, &signature_r,
+                              &signature_s, signature_len) != SUCCESS) {
     goto end;
   }
 
@@ -75,22 +86,8 @@ sign(const unsigned char *data_hash, const size_t data_hash_len,
     goto end;
   }
 
-  size_t signature_r_len = strlen(signature_r);
-  if (signature_r_len >= MAX_SIGNATURE_BUFFER_LEN) {
-    set_error_message(result.error_message,
-                      "Created signature_r is too long for its buffer: ");
-    goto end;
-  }
-
-  size_t signature_s_len = strlen(signature_s);
-  if (signature_s_len >= MAX_SIGNATURE_BUFFER_LEN) {
-    set_error_message(result.error_message,
-                      "Created signature_s is too long for its buffer: ");
-    goto end;
-  }
-
-  memcpy(result.signature_r, signature_r, signature_r_len + 1);
-  memcpy(result.signature_s, signature_s, signature_s_len + 1);
+  memcpy(result.signature_r, signature_r, signature_len);
+  memcpy(result.signature_s, signature_s, signature_len);
 
 end:
   EVP_PKEY_free(key);
@@ -164,11 +161,13 @@ end_create_signature:
   return signature;
 }
 
-int signature_to_hex_values(const ECDSA_SIG *signature, char *error_message,
-                            char **signature_r, char **signature_s) {
+int signature_to_bin_values(const ECDSA_SIG *signature, char *error_message,
+                            char **signature_r, char **signature_s,
+                            const int signature_len) {
   int ret = GENERIC_ERROR;
 
-  const BIGNUM *r = NULL, *s = NULL;
+  const BIGNUM *r = NULL;
+  const BIGNUM *s = NULL;
   ECDSA_SIG_get0(signature, &r, &s);
 
   if (r == NULL) {
@@ -183,15 +182,17 @@ int signature_to_hex_values(const ECDSA_SIG *signature, char *error_message,
     goto end_signature_to_hex_values;
   }
 
-  if ((*signature_r = BN_bn2hex(r)) == NULL) {
+  if (BN_bn2binpad(r, (unsigned char *)*signature_r, signature_len) ==
+      GENERIC_ERROR) {
     set_error_message(error_message,
-                      "Could not convert r to its hex representation: ");
+                      "Could not convert r into its big-endian form: ");
     goto end_signature_to_hex_values;
   }
 
-  if ((*signature_s = BN_bn2hex(s)) == NULL) {
+  if (BN_bn2binpad(s, (unsigned char *)*signature_s, signature_len) ==
+      GENERIC_ERROR) {
     set_error_message(error_message,
-                      "Could not convert s to its hex representation: ");
+                      "Could not convert s into its big-endian form: ");
     goto end_signature_to_hex_values;
   }
 
@@ -202,15 +203,11 @@ end_signature_to_hex_values:
   return ret;
 }
 
-int calculate_signature_v(struct sign_result *result,
-                          const unsigned char *data_hash,
-                          const size_t data_hash_len, const char *signature_r,
-                          const char *signature_s,
-                          const unsigned char public_key_data[],
-                          uint8_t public_key_len, uint8_t curve_byte_len,
-                          int curve_nid) {
-  unsigned char *recovered_public_key_data = NULL;
-
+int calculate_signature_v(struct sign_result *result, const char data_hash[],
+                          const size_t data_hash_len, const char signature_r[],
+                          const char signature_s[],
+                          const char public_key_data[], uint8_t public_key_len,
+                          uint8_t curve_byte_len, int curve_nid) {
   int ret = FAILURE;
 
   for (int i = 0; i < 2; i++) {
@@ -223,16 +220,11 @@ int calculate_signature_v(struct sign_result *result,
       goto end_calculate_signature_v;
     }
 
-    recovered_public_key_data = hex_to_bin(recovery_result.public_key);
-
-    if (memcmp(public_key_data, recovered_public_key_data, public_key_len) ==
+    if (memcmp(public_key_data, recovery_result.public_key, public_key_len) ==
         0) {
-      result->signature_v = i;
+      result->signature_v = (char) i;
       break;
     }
-
-    free(recovered_public_key_data);
-    recovered_public_key_data = NULL;
   }
 
   if (result->signature_v == -1) {
@@ -244,8 +236,6 @@ int calculate_signature_v(struct sign_result *result,
   ret = SUCCESS;
 
 end_calculate_signature_v:
-
-  free(recovered_public_key_data);
 
   return ret;
 }

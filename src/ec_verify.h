@@ -23,29 +23,18 @@
 extern "C" {
 #endif
 
-struct verify_result {
-  int verified;
-  char error_message[256];
-};
-
-struct verify_result p256_verify(const unsigned char *data_hash,
-                                 const size_t data_hash_length,
-                                 const char *signature_r,
-                                 const char *signature_s,
-                                 const unsigned char public_key_data[]);
-
-struct verify_result verify(const unsigned char *data_hash,
-                            const size_t data_hash_length,
-                            const char *signature_r_hex,
-                            const char *signature_s_hex,
-                            const unsigned char public_key_data[],
-                            const char *group_name, uint8_t public_key_len);
+struct verify_result verify(const char data_hash[], const int data_hash_length,
+                            const char signature_r_hex[],
+                            const char signature_s_hex[],
+                            const char public_key_data[], int public_key_len,
+                            const char *group_name);
 
 int create_der_encoded_signature(unsigned char **der_encoded_signature,
                                  int *der_encoded_signature_len,
                                  char *error_message,
-                                 const char *signature_r_hex,
-                                 const char *signature_s_hex);
+                                 const char signature_r_arr[],
+                                 const char signature_s_arr[],
+                                 int signature_arr_len);
 #ifdef __cplusplus
 extern
 }

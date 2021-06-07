@@ -20,27 +20,28 @@
 #include "openssl/include/openssl/ec.h"
 #include "openssl/include/openssl/evp.h"
 
+#include "besu_native_ec.h"
 #include "constants.h"
 #include "ec_key.h"
 #include "ec_verify.h"
 #include "utils.h"
 
-struct verify_result p256_verify(const unsigned char *data_hash,
-                                 const size_t data_hash_length,
-                                 const char *signature_r_hex,
-                                 const char *signature_s_hex,
-                                 const unsigned char public_key_data[]) {
+struct verify_result p256_verify(const char data_hash[],
+                                 const int data_hash_length,
+                                 const char signature_r_hex[],
+                                 const char signature_s_hex[],
+                                 const char public_key_data[]) {
   static const uint8_t P256_PUBLIC_KEY_LENGTH = 64;
+
   return verify(data_hash, data_hash_length, signature_r_hex, signature_s_hex,
-                public_key_data, "prime256v1", P256_PUBLIC_KEY_LENGTH);
+                public_key_data, P256_PUBLIC_KEY_LENGTH, "prime256v1");
 }
 
-struct verify_result verify(const unsigned char *data_hash,
-                            const size_t data_hash_length,
-                            const char *signature_r_hex,
-                            const char *signature_s_hex,
-                            const unsigned char public_key_data[],
-                            const char *group_name, uint8_t public_key_len) {
+struct verify_result verify(const char data_hash[], const int data_hash_length,
+                            const char signature_r_arr[],
+                            const char signature_s_arr[],
+                            const char public_key_data[], int public_key_len,
+                            const char *group_name) {
   struct verify_result result = {.verified = GENERIC_ERROR,
                                  .error_message = {0}};
 
@@ -48,16 +49,18 @@ struct verify_result verify(const unsigned char *data_hash,
   unsigned char *der_encoded_signature = NULL;
   EVP_PKEY_CTX *verify_context = NULL;
 
-  if (create_public_key(&key, result.error_message, public_key_data,
-                        public_key_len, group_name) != SUCCESS) {
+  if (create_public_key(&key, result.error_message,
+                        (const unsigned char *)public_key_data, public_key_len,
+                        group_name) != SUCCESS) {
     goto end;
   }
 
+  int signature_arr_len = public_key_len / 2;
   int der_encoded_signature_len = 0;
   if (create_der_encoded_signature(
           &der_encoded_signature, &der_encoded_signature_len,
-          result.error_message, signature_r_hex, signature_s_hex) != SUCCESS) {
-    set_error_message(result.error_message, "Could not create signature: ");
+          result.error_message, signature_r_arr, signature_s_arr,
+          signature_arr_len) != SUCCESS) {
     goto end;
   }
 
@@ -75,13 +78,11 @@ struct verify_result verify(const unsigned char *data_hash,
 
   // verify signature: 1 = successfully verified, 0 = not successfully verified,
   // < 0 = error
-  result.verified =
-      EVP_PKEY_verify(verify_context, der_encoded_signature,
-                      der_encoded_signature_len, data_hash, data_hash_length);
+  result.verified = EVP_PKEY_verify(
+      verify_context, der_encoded_signature, der_encoded_signature_len,
+      (const unsigned char *)data_hash, data_hash_length);
 
-  if (result.verified == 0) {
-    snprintf(result.error_message, 256, "Signature not valid");
-  } else if (result.verified < 0) {
+  if (result.verified < 0) {
     set_error_message(result.error_message,
                       "Error while verifying signature: ");
   }
@@ -97,21 +98,24 @@ end:
 int create_der_encoded_signature(unsigned char **der_encoded_signature,
                                  int *der_encoded_signature_len,
                                  char *error_message,
-                                 const char *signature_r_hex,
-                                 const char *signature_s_hex) {
+                                 const char signature_r_arr[],
+                                 const char signature_s_arr[],
+                                 int signature_arr_len) {
   int ret = FAILURE;
   ECDSA_SIG *signature = NULL;
 
   BIGNUM *signature_r = NULL;
   BIGNUM *signature_s = NULL;
+  char *signature_r_str = hex_arr_to_str(signature_r_arr, signature_arr_len);
+  char *signature_s_str = hex_arr_to_str(signature_s_arr, signature_arr_len);
 
-  if (BN_hex2bn(&signature_r, signature_r_hex) == FAILURE) {
+  if (BN_hex2bn(&signature_r, signature_r_str) == FAILURE) {
     set_error_message(error_message,
                       "Could not convert r of signature to BIGNUM: ");
     goto end_create_der_encoded_signature;
   }
 
-  if (BN_hex2bn(&signature_s, signature_s_hex) == FAILURE) {
+  if (BN_hex2bn(&signature_s, signature_s_str) == FAILURE) {
     set_error_message(error_message,
                       "Could not convert s of signature to BIGNUM: ");
     goto end_create_der_encoded_signature;
@@ -143,6 +147,9 @@ int create_der_encoded_signature(unsigned char **der_encoded_signature,
   ret = SUCCESS;
 
 end_create_der_encoded_signature:
+  free(signature_r_str);
+  free(signature_s_str);
+
   // if the signature_r & signature_s are successfully added to the signature,
   // the signature takes over the memory management and frees them when the
   // signature is freed

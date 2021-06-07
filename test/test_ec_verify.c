@@ -55,7 +55,9 @@ void p256_verify_should_verify_signatures_according_to_test_vectors(void) {
     }
 
     unsigned char *data_bin = hex_to_bin(test_vectors[i].data);
-    unsigned char *public_key_bin = hex_to_bin(test_vectors[i].public_key);
+    char *public_key_bin = (char *)hex_to_bin(test_vectors[i].public_key);
+    char *signature_r_bin = (char *)hex_to_bin(test_vectors[i].signature_r);
+    char *signature_s_bin = (char *)hex_to_bin(test_vectors[i].signature_s);
 
     if (EVP_Digest(data_bin, strlen(test_vectors[i].data) / 2, md_value,
                    &md_value_len, md, NULL) != 1) {
@@ -63,13 +65,15 @@ void p256_verify_should_verify_signatures_according_to_test_vectors(void) {
     }
 
     struct verify_result result =
-        p256_verify(md_value, md_value_len, test_vectors[i].signature_r,
-                    test_vectors[i].signature_s, public_key_bin);
+        p256_verify((const char *)md_value, md_value_len, signature_r_bin,
+                    signature_s_bin, (const char *)public_key_bin);
 
     TEST_ASSERT_EQUAL_INT(test_vectors[i].result, result.verified);
 
     free(data_bin);
     free(public_key_bin);
+    free(signature_r_bin);
+    free(signature_s_bin);
   }
 
   EVP_MD_free((EVP_MD *)md_sha224);
