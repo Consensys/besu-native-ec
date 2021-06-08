@@ -26,40 +26,24 @@
 extern "C" {
 #endif
 
-struct sign_result {
-  // 263 = 262 bytes are needed for a P-521 signature + 1 byte for the null byte
-  // at the end
-  char signature_r[263];
-  char signature_s[263];
-  int signature_v;
-  char error_message[256];
-};
-
-struct sign_result p256_sign(const unsigned char *data_hash,
-                             const size_t data_hash_length,
-                             const unsigned char private_key_data[],
-                             const unsigned char public_key_data[]);
-
-struct sign_result
-sign(const unsigned char *data_hash, const size_t data_hash_len,
-     const unsigned char private_key_data[], uint8_t private_key_len,
-     const unsigned char public_key_data[], uint8_t public_key_len,
-     const char *group_name, int curve_nid);
+struct sign_result sign(const char data_hash[], const int data_hash_len,
+                        const char private_key_data[], int private_key_len,
+                        const char public_key_data[], int public_key_len,
+                        const char *group_name, int curve_nid);
 
 ECDSA_SIG *create_signature(EVP_PKEY *key, char *error_message,
                             const unsigned char *data_hash,
                             const size_t data_hash_length);
 
-int signature_to_hex_values(const ECDSA_SIG *signature, char *error_message,
-                            char **signature_r, char **signature_s);
+int signature_to_bin_values(const ECDSA_SIG *signature, char *error_message,
+                            char **signature_r, char **signature_s,
+                            const int signature_len);
 
-int calculate_signature_v(struct sign_result *result,
-                          const unsigned char *data_hash,
-                          const size_t data_hash_len, const char *signature_r,
-                          const char *signature_s,
-                          const unsigned char public_key_data[],
-                          uint8_t public_key_len, uint8_t private_key_len,
-                          int curve_nid);
+int calculate_signature_v(struct sign_result *result, const char data_hash[],
+                          const size_t data_hash_len, const char signature_r[],
+                          const char signature_s[],
+                          const char public_key_data[], uint8_t public_key_len,
+                          uint8_t curve_byte_len, int curve_nid);
 
 #ifdef __cplusplus
 extern

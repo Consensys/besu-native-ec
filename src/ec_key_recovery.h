@@ -21,25 +21,11 @@
 extern "C" {
 #endif
 
-struct key_recovery_result {
-  // 263 = 262 bytes are needed for a P-521 public key + 1 byte for the null
-  // byte at the end
-  char public_key[263];
-  char error_message[256];
-};
-
-struct key_recovery_result p256_key_recovery(const unsigned char *data_hash,
-                                             const size_t data_hash_len,
-                                             const char *signature_r_hex,
-                                             const char *signature_s_hex,
-                                             unsigned int signature_v);
-
-struct key_recovery_result key_recovery(const unsigned char *data_hash,
-                                        size_t data_hash_len,
-                                        const char *signature_r_hex,
-                                        const char *signature_s_hex,
-                                        unsigned int signature_v, int curve_nid,
-                                        unsigned int curve_byte_length);
+struct key_recovery_result
+key_recovery(const char data_hash[], int data_hash_len,
+             const char signature_r_arr[], const char signature_s_arr[],
+             const int signature_v, const int curve_nid,
+             const int curve_byte_length);
 
 #ifdef __cplusplus
 extern

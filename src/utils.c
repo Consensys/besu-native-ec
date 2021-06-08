@@ -65,10 +65,16 @@ unsigned char *hex_to_bin(const char *hex_string) {
   return data;
 }
 
-char *to_lower_case(char *s) {
-  for (char *p = s; *p; p++) {
-    *p = tolower(*p);
+char *hex_arr_to_str(const char *p, int p_len) {
+  int i;
+  char tmp[3];
+  int len = 2 * p_len + 1;
+  char *output = malloc(len);
+  memset(output, 0, len);
+  for (i = 0; i < p_len; i++) {
+    sprintf(tmp, "%02x", (unsigned char)p[i]);
+    strcat(output, tmp);
   }
 
-  return s;
+  return output;
 }

@@ -33,21 +33,26 @@ void p256_key_recovery_should_recover_correct_public_keys(
 
   for (int i = 0; i < test_vectors_len; i++) {
     unsigned char *data_bin = hex_to_bin(test_vectors[i].data);
+    char *signature_r_bin = (char *)hex_to_bin(test_vectors[i].signature_r);
+    char *signature_s_bin = (char *)hex_to_bin(test_vectors[i].signature_s);
+    char *public_key_bin = (char *)hex_to_bin(test_vectors[i].public_key);
 
     if (EVP_Digest(data_bin, strlen(test_vectors[i].data) / 2, md_value,
                    &md_value_len, md, NULL) != 1) {
       TEST_FAIL_MESSAGE("Hashing not successful");
     }
 
-    struct key_recovery_result result = p256_key_recovery(
-        md_value, md_value_len, test_vectors[i].signature_r,
-        test_vectors[i].signature_s, test_vectors[i].signature_v);
+    struct key_recovery_result result =
+        p256_key_recovery((const char *)md_value, md_value_len, signature_r_bin,
+                          signature_s_bin, test_vectors[i].signature_v);
 
     TEST_ASSERT_EQUAL_STRING("", result.error_message);
-    TEST_ASSERT_EQUAL_STRING(test_vectors[i].public_key,
-                             to_lower_case(result.public_key));
+    TEST_ASSERT_EQUAL_CHAR_ARRAY(public_key_bin, result.public_key, 64);
 
     free(data_bin);
+    free(signature_r_bin);
+    free(signature_s_bin);
+    free(public_key_bin);
   }
 }
 

@@ -2,15 +2,23 @@ ifeq ($(OS),Windows_NT)
   ifeq ($(shell uname -s),) # not in a bash-like shell
 	CLEANUP = del /F /Q
 	MKDIR = mkdir
+	COPY = copy
   else # in a bash-like shell, like msys
 	CLEANUP = rm -f
 	MKDIR = mkdir -p
   endif
-	TARGET_EXTENSION=.exe
+	TEST_EXTENSION=exe
+	LIBRARY_EXTENSION=dll
 else
 	CLEANUP = rm -f
 	MKDIR = mkdir -p
-	TARGET_EXTENSION=out
+	COPY = cp
+	TEST_EXTENSION=out
+	ifeq ($(shell uname -s),Darwin) # on MacOS
+		LIBRARY_EXTENSION=dylib
+	else # on Linux
+		LIBRARY_EXTENSION=so
+	endif
 endif
 
 .PHONY: clean
@@ -20,19 +28,19 @@ PATHU = unity/src/
 PATHS = src/
 PATHT = test/
 PATHB = build/
-PATHD = build/depends/
 PATHO = build/objs/
 PATHR = build/results/
+PATHRE = release/
+PATHRO = build/release/objs/
 PATH_OPENSSL = openssl/
 PATH_OPENSSL_INCLUDE = openssl/include/
 
-BUILD_PATHS = $(PATHB) $(PATHD) $(PATHO) $(PATHR)
+BUILD_PATHS = $(PATHB) $(PATHO) $(PATHR)
 
 SRCT = $(wildcard $(PATHT)*.c)
 
-COMPILE=gcc -c -Wall -Werror -std=c11 -O3 -fPIC -lC
+COMPILE=gcc -c -Wall -Werror -std=c11 -O3 -fPIC -lc
 LINK=gcc -L$(PATH_OPENSSL) -Wl,-rpath=$(PATH_OPENSSL)
-DEPEND=gcc -MM -MG -MF
 CFLAGS=-I. -I$(PATHU) -I$(PATHS) -I$(PATH_OPENSSL_INCLUDE) -DTEST
 
 RESULTS = $(patsubst $(PATHT)test_%.c,$(PATHR)test_%.txt,$(SRCT) )
@@ -50,13 +58,13 @@ test: $(BUILD_PATHS) $(RESULTS)
 	@echo "$(PASSED)"
 	@echo "\nDONE"
 
-$(PATHR)%.txt: $(PATHB)%.$(TARGET_EXTENSION)
+$(PATHR)%.txt: $(PATHB)%.$(TEST_EXTENSION)
 	-./$< > $@ 2>&1
 
-$(PATHB)test_ec_sign.$(TARGET_EXTENSION): $(PATHO)test_ec_sign.o $(PATHO)ec_sign.o $(PATHO)ec_verify.o $(PATHO)ec_key_recovery.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
+$(PATHB)test_ec_sign.$(TEST_EXTENSION): $(PATHO)test_ec_sign.o $(PATHO)ec_sign.o $(PATHO)ec_verify.o $(PATHO)ec_key_recovery.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
 	$(LINK) -o $@ $^ -lcrypto
 
-$(PATHB)test_%.$(TARGET_EXTENSION): $(PATHO)test_%.o $(PATHO)%.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
+$(PATHB)test_%.$(TEST_EXTENSION): $(PATHO)test_%.o $(PATHO)%.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
 	$(LINK) -o $@ $^ -lcrypto
 
 $(PATHO)%.o:: $(PATHT)%.c
@@ -68,14 +76,8 @@ $(PATHO)%.o:: $(PATHS)%.c
 $(PATHO)%.o:: $(PATHU)%.c $(PATHU)%.h
 	$(COMPILE) --debug $(CFLAGS) $< -o $@
 
-$(PATHD)%.d:: $(PATHT)%.c
-	$(DEPEND) $@ $<
-
 $(PATHB):
 	$(MKDIR) $(PATHB)
-
-$(PATHD):
-	$(MKDIR) $(PATHD)
 
 $(PATHO):
 	$(MKDIR) $(PATHO)
@@ -83,12 +85,27 @@ $(PATHO):
 $(PATHR):
 	$(MKDIR) $(PATHR)
 
+$(PATHRE):
+	$(MKDIR) $(PATHRE)
+
+$(PATHRO):
+	$(MKDIR) $(PATHRO)
+
+release: $(PATHRO)constants.o $(PATHRO)ec_key.o $(PATHRO)ec_key_recovery.o $(PATHRO)ec_sign.o $(PATHRO)ec_verify.o $(PATHRO)utils.o
+	$(LINK) $^ -lcrypto -fPIC -shared -o $(PATHRE)libbesu_native_ec.$(LIBRARY_EXTENSION)
+	$(COPY) src/besu_native_ec.h $(PATHRE)
+	$(COPY) $(PATH_OPENSSL)libcrypto.$(LIBRARY_EXTENSION) $(PATHRE)
+
+$(PATHRO)%.o: $(PATHS)%.c $(PATHRO) $(PATHRE)
+	$(COMPILE) $(CFLAGS) $< -o $@
+
 clean:
 	$(CLEANUP) $(PATHO)*.o
-	$(CLEANUP) $(PATHB)*.$(TARGET_EXTENSION)
+	$(CLEANUP) $(PATHRO)*.o
+	$(CLEANUP) $(PATHB)*.$(TEST_EXTENSION)
 	$(CLEANUP) $(PATHR)*.txt
+	$(CLEANUP) $(PATHRE)*.$(LIBRARY_EXTENSION) $(PATHRE)*.h
 
-.PRECIOUS: $(PATHB)test_%.$(TARGET_EXTENSION)
-.PRECIOUS: $(PATHD)%.d
+.PRECIOUS: $(PATHB)test_%.$(TEST_EXTENSION)
 .PRECIOUS: $(PATHO)%.o
 .PRECIOUS: $(PATHR)%.txt

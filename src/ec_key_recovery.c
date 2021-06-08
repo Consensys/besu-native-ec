@@ -22,19 +22,19 @@
 #include "openssl/include/openssl/ec.h"
 #include "openssl/include/openssl/obj_mac.h"
 
+#include "besu_native_ec.h"
 #include "constants.h"
 #include "ec_key_recovery.h"
 #include "utils.h"
 
-struct key_recovery_result p256_key_recovery(const unsigned char *data_hash,
-                                             const size_t data_hash_len,
-                                             const char *signature_r_hex,
-                                             const char *signature_s_hex,
-                                             unsigned int signature_v) {
+struct key_recovery_result p256_key_recovery(const char data_hash[],
+                                             const int data_hash_len,
+                                             const char signature_r[],
+                                             const char signature_s[],
+                                             const int signature_v) {
   unsigned int CURVE_BYTE_LENGTH = 32;
-  return key_recovery(data_hash, data_hash_len, signature_r_hex,
-                      signature_s_hex, signature_v, NID_X9_62_prime256v1,
-                      CURVE_BYTE_LENGTH);
+  return key_recovery(data_hash, data_hash_len, signature_r, signature_s,
+                      signature_v, NID_X9_62_prime256v1, CURVE_BYTE_LENGTH);
 }
 
 // Given the components of a signature and a selector value, recover and return
@@ -42,12 +42,12 @@ struct key_recovery_result p256_key_recovery(const unsigned char *data_hash,
 // SEC1v2 section 4.1.6.
 //
 // http://www.secg.org/sec1-v2.pdf
-struct key_recovery_result key_recovery(const unsigned char *data_hash,
-                                        size_t data_hash_len,
-                                        const char *signature_r_hex,
-                                        const char *signature_s_hex,
-                                        unsigned int signature_v, int curve_nid,
-                                        unsigned int curve_byte_length) {
+struct key_recovery_result key_recovery(const char data_hash[],
+                                        int data_hash_len,
+                                        const char signature_r_arr[],
+                                        const char signature_s_arr[],
+                                        int signature_v, const int curve_nid,
+                                        const int curve_byte_length) {
   struct key_recovery_result result = {.public_key = {0}, .error_message = {0}};
 
   EC_GROUP *group = NULL;
@@ -57,10 +57,14 @@ struct key_recovery_result key_recovery(const unsigned char *data_hash,
   BN_CTX *bn_context = NULL;
   EC_POINT *R = NULL, *nR = NULL, *sR = NULL, *negative_eG = NULL,
            *sR_minus_eG = NULL, *Q = NULL;
-  char *Q_hex = NULL;
+  char *Q_octet = NULL;
 
-  if ((signature_v == 0 || signature_v == 1 || signature_v == 27 ||
-       signature_v == 28) != 1) {
+  int signature_arr_len = curve_byte_length;
+  char *signature_r_str = hex_arr_to_str(signature_r_arr, signature_arr_len);
+  char *signature_s_str = hex_arr_to_str(signature_s_arr, signature_arr_len);
+
+  if (signature_v != 0 && signature_v != 1 && signature_v != 27 &&
+      signature_v != 28) {
     set_error_message(result.error_message,
                       "signature_v must be either 0, 1, 27 or 28: ");
     goto end;
@@ -109,7 +113,7 @@ struct key_recovery_result key_recovery(const unsigned char *data_hash,
     goto end;
   }
 
-  if (BN_hex2bn(&r, signature_r_hex) == FAILURE) {
+  if (BN_hex2bn(&r, signature_r_str) == FAILURE) {
     set_error_message(result.error_message,
                       "Could not convert r of signature to BIGNUM: ");
     goto end;
@@ -156,7 +160,8 @@ struct key_recovery_result key_recovery(const unsigned char *data_hash,
   }
 
   // 1.5. Compute e from M using Steps 2 and 3 of ECDSA signature verification.
-  if ((e = BN_bin2bn(data_hash, data_hash_len, NULL)) == NULL) {
+  if ((e = BN_bin2bn((const unsigned char *)data_hash, data_hash_len, NULL)) ==
+      NULL) {
     set_error_message(result.error_message,
                       "Could not convert data hash to BIGNUM: ");
     goto end;
@@ -174,7 +179,7 @@ struct key_recovery_result key_recovery(const unsigned char *data_hash,
   }
 
   // s * R
-  if (BN_hex2bn(&s, signature_s_hex) == FAILURE) {
+  if (BN_hex2bn(&s, signature_s_str) == FAILURE) {
     set_error_message(result.error_message,
                       "Could not convert s of signature to BIGNUM: ");
     goto end;
@@ -229,26 +234,34 @@ struct key_recovery_result key_recovery(const unsigned char *data_hash,
     goto end;
   }
 
+  int Q_octet_len = 0;
   point_conversion_form_t form = EC_GROUP_get_point_conversion_form(group);
-  if ((Q_hex = EC_POINT_point2hex(group, Q, form, bn_context)) == NULL) {
+  if ((Q_octet_len = EC_POINT_point2oct(group, Q, form, NULL, 0, bn_context)) == 0) {
     set_error_message(result.error_message,
-                      "Could convert Q to its hexadecimal value: ");
+                      "Could determine the buffer size of the octet form of Q: ");
+  }
+
+  if (Q_octet_len >= MAX_PUBLIC_KEY_BUFFER_LEN) {
+    set_error_message(result.error_message,
+                      "Recovered public key is too long for its buffer: ");
+    goto end;
+  }
+
+  Q_octet = OPENSSL_malloc(Q_octet_len);
+  if (EC_POINT_point2oct(group, Q, form, (unsigned char *) Q_octet, Q_octet_len, bn_context) == 0) {
+    set_error_message(result.error_message,
+                      "Could convert Q to its octet form: ");
     goto end;
   }
 
   // do not copy the first byte (two hex values), because it is always 0x04
   // to indicate that it is an uncompressed public key format
-  const char *Q_hex_after_format_identifier = Q_hex + 2;
-
-  size_t public_key_len = strlen(Q_hex_after_format_identifier);
-  if (public_key_len >= MAX_PUBLIC_KEY_BUFFER_LEN) {
-    set_error_message(result.error_message,
-                      "Recovered public key is too long for its buffer: ");
-    goto end;
-  }
-  memcpy(result.public_key, Q_hex_after_format_identifier, public_key_len + 1);
+  const char *Q_octet_without_format_identifier = Q_octet + 1;
+  memcpy(result.public_key, Q_octet_without_format_identifier, Q_octet_len - 1);
 
 end:
+  free(signature_r_str);
+  free(signature_s_str);
   EC_GROUP_free(group);
   BN_CTX_free(bn_context);
   BN_free(p);
@@ -262,7 +275,7 @@ end:
   EC_POINT_free(sR);
   EC_POINT_free(Q);
   EC_POINT_free(sR_minus_eG);
-  OPENSSL_free(Q_hex);
+  OPENSSL_free(Q_octet);
 
   return result;
 }
