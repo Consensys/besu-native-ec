@@ -33,14 +33,14 @@ PATHR = build/results/
 PATHRE = release/
 PATHRO = build/release/objs/
 PATH_OPENSSL = openssl/
-PATH_OPENSSL_INCLUDE = openssl/include/
+PATH_OPENSSL_INCLUDE = ./openssl/include/
 
 BUILD_PATHS = $(PATHB) $(PATHO) $(PATHR)
 
 SRCT = $(wildcard $(PATHT)*.c)
 
-COMPILE=gcc -c -Wall -Werror -std=c11 -O3 -fPIC -lc
-LINK=gcc -L$(PATH_OPENSSL) -Wl,-rpath=$(PATH_OPENSSL)
+COMPILE=gcc -c -Wall -Werror -std=c11 -O3 -fPIC
+LINK=gcc -L$(PATH_OPENSSL) -Wl,-rpath $(PATH_OPENSSL) -lcrypto -lc
 CFLAGS=-I. -I$(PATHU) -I$(PATHS) -I$(PATH_OPENSSL_INCLUDE) -DTEST
 
 RESULTS = $(patsubst $(PATHT)test_%.c,$(PATHR)test_%.txt,$(SRCT) )
@@ -62,10 +62,18 @@ $(PATHR)%.txt: $(PATHB)%.$(TEST_EXTENSION)
 	-./$< > $@ 2>&1
 
 $(PATHB)test_ec_sign.$(TEST_EXTENSION): $(PATHO)test_ec_sign.o $(PATHO)ec_sign.o $(PATHO)ec_verify.o $(PATHO)ec_key_recovery.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
-	$(LINK) -o $@ $^ -lcrypto
+	$(LINK) -o $@ $^
+# ifeq must not be indented
+ifeq ($(shell uname -s),Darwin)
+	install_name_tool -change /usr/local/lib/libcrypto.3.dylib @rpath/libcrypto.3.dylib $@
+endif
 
 $(PATHB)test_%.$(TEST_EXTENSION): $(PATHO)test_%.o $(PATHO)%.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
-	$(LINK) -o $@ $^ -lcrypto
+	$(LINK) -o $@ $^
+# ifeq must not be indented
+ifeq ($(shell uname -s),Darwin)
+	install_name_tool -change /usr/local/lib/libcrypto.3.dylib @rpath/libcrypto.3.dylib $@
+endif
 
 $(PATHO)%.o:: $(PATHT)%.c
 	$(COMPILE) --debug $(CFLAGS) $< -o $@
@@ -91,7 +99,7 @@ $(PATHRE):
 $(PATHRO):
 	$(MKDIR) $(PATHRO)
 
-release: $(PATHRO)constants.o $(PATHRO)ec_key.o $(PATHRO)ec_key_recovery.o $(PATHRO)ec_sign.o $(PATHRO)ec_verify.o $(PATHRO)utils.o
+release_build: $(PATHRO)constants.o $(PATHRO)ec_key.o $(PATHRO)ec_key_recovery.o $(PATHRO)ec_sign.o $(PATHRO)ec_verify.o $(PATHRO)utils.o
 	$(LINK) $^ -lcrypto -fPIC -shared -o $(PATHRE)libbesu_native_ec.$(LIBRARY_EXTENSION)
 	$(COPY) src/besu_native_ec.h $(PATHRE)
 	$(COPY) $(PATH_OPENSSL)libcrypto.$(LIBRARY_EXTENSION) $(PATHRE)

@@ -2,4 +2,4 @@ git submodule update
 
 make clean
 make
-make release
+make release_build
