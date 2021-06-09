@@ -102,7 +102,7 @@ $(PATHRO):
 release_build: $(PATHRO)constants.o $(PATHRO)ec_key.o $(PATHRO)ec_key_recovery.o $(PATHRO)ec_sign.o $(PATHRO)ec_verify.o $(PATHRO)utils.o
 	$(LINK) $^ -lcrypto -fPIC -shared -o $(PATHRE)libbesu_native_ec.$(LIBRARY_EXTENSION)
 	$(COPY) src/besu_native_ec.h $(PATHRE)
-	$(COPY) $(PATH_OPENSSL)libcrypto.$(LIBRARY_EXTENSION) $(PATHRE)
+	$(COPY) $(PATH_OPENSSL)libcrypto.$(LIBRARY_EXTENSION).3 $(PATHRE)
 
 $(PATHRO)%.o: $(PATHS)%.c $(PATHRO) $(PATHRE)
 	$(COMPILE) $(CFLAGS) $< -o $@
