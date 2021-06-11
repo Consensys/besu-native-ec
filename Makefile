@@ -40,7 +40,7 @@ BUILD_PATHS = $(PATHB) $(PATHO) $(PATHR)
 SRCT = $(wildcard $(PATHT)*.c)
 
 COMPILE=gcc -c -Wall -Werror -std=c11 -O3 -fPIC
-LINK=gcc -L$(PATH_OPENSSL) -Wl,-rpath $(PATH_OPENSSL) -lcrypto -lc
+LINK=gcc -L$(PATH_OPENSSL) -Wl,-rpath $(PATH_OPENSSL)
 CFLAGS=-I. -I$(PATHU) -I$(PATHS) -I$(PATH_OPENSSL_INCLUDE) -DTEST
 
 RESULTS = $(patsubst $(PATHT)test_%.c,$(PATHR)test_%.txt,$(SRCT) )
@@ -62,14 +62,14 @@ $(PATHR)%.txt: $(PATHB)%.$(TEST_EXTENSION)
 	-./$< > $@ 2>&1
 
 $(PATHB)test_ec_sign.$(TEST_EXTENSION): $(PATHO)test_ec_sign.o $(PATHO)ec_sign.o $(PATHO)ec_verify.o $(PATHO)ec_key_recovery.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
-	$(LINK) -o $@ $^
+	$(LINK) -o $@ $^ -lcrypto -lc
 # ifeq must not be indented
 ifeq ($(shell uname -s),Darwin)
 	install_name_tool -change /usr/local/lib/libcrypto.3.dylib @rpath/libcrypto.3.dylib $@
 endif
 
 $(PATHB)test_%.$(TEST_EXTENSION): $(PATHO)test_%.o $(PATHO)%.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
-	$(LINK) -o $@ $^
+	$(LINK) -o $@ $^ -lcrypto -lc
 # ifeq must not be indented
 ifeq ($(shell uname -s),Darwin)
 	install_name_tool -change /usr/local/lib/libcrypto.3.dylib @rpath/libcrypto.3.dylib $@
