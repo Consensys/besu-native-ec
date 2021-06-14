@@ -46,20 +46,21 @@ void p256_sign_should_create_valid_signatures(
 
     TEST_ASSERT_EQUAL_STRING("", result_sign.error_message);
 
-    struct verify_result result_verify =
-        p256_verify((const char *)md_value, md_value_len, result_sign.signature_r,
-                    result_sign.signature_s, (const char *)public_key_bin);
+    struct verify_result result_verify = p256_verify(
+        (const char *)md_value, md_value_len, result_sign.signature_r,
+        result_sign.signature_s, (const char *)public_key_bin);
 
     TEST_ASSERT_EQUAL_STRING("", result_verify.error_message);
     TEST_ASSERT_EQUAL_INT_MESSAGE(1, result_verify.verified,
                                   "Signature verification not successful");
 
-    struct key_recovery_result result_key_recovery =
-        p256_key_recovery((const char *)md_value, md_value_len, result_sign.signature_r,
-                          result_sign.signature_s, result_sign.signature_v);
+    struct key_recovery_result result_key_recovery = p256_key_recovery(
+        (const char *)md_value, md_value_len, result_sign.signature_r,
+        result_sign.signature_s, result_sign.signature_v);
 
     TEST_ASSERT_EQUAL_STRING("", result_key_recovery.error_message);
-    TEST_ASSERT_EQUAL_CHAR_ARRAY(public_key_bin, result_key_recovery.public_key, 64);
+    TEST_ASSERT_EQUAL_CHAR_ARRAY(public_key_bin, result_key_recovery.public_key,
+                                 64);
 
     free(data_bin);
     free(private_key_bin);

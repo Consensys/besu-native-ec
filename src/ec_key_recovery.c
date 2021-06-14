@@ -236,9 +236,11 @@ struct key_recovery_result key_recovery(const char data_hash[],
 
   int Q_octet_len = 0;
   point_conversion_form_t form = EC_GROUP_get_point_conversion_form(group);
-  if ((Q_octet_len = EC_POINT_point2oct(group, Q, form, NULL, 0, bn_context)) == 0) {
-    set_error_message(result.error_message,
-                      "Could determine the buffer size of the octet form of Q: ");
+  if ((Q_octet_len = EC_POINT_point2oct(group, Q, form, NULL, 0, bn_context)) ==
+      0) {
+    set_error_message(
+        result.error_message,
+        "Could determine the buffer size of the octet form of Q: ");
   }
 
   if (Q_octet_len >= MAX_PUBLIC_KEY_BUFFER_LEN) {
@@ -248,7 +250,8 @@ struct key_recovery_result key_recovery(const char data_hash[],
   }
 
   Q_octet = OPENSSL_malloc(Q_octet_len);
-  if (EC_POINT_point2oct(group, Q, form, (unsigned char *) Q_octet, Q_octet_len, bn_context) == 0) {
+  if (EC_POINT_point2oct(group, Q, form, (unsigned char *)Q_octet, Q_octet_len,
+                         bn_context) == 0) {
     set_error_message(result.error_message,
                       "Could convert Q to its octet form: ");
     goto end;
