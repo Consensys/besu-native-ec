@@ -65,14 +65,14 @@ test: $(BUILD_PATHS) $(RESULTS) $(CRYPTO_LIB_PATH)
 $(PATHR)%.txt: $(PATHB)%.$(TEST_EXTENSION)
 	-./$< > $@ 2>&1
 
-$(PATHB)test_ec_sign.$(TEST_EXTENSION): $(PATHO)test_ec_sign.o $(PATHO)ec_sign.o $(PATHO)ec_verify.o $(PATHO)ec_key_recovery.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
+$(PATHB)test_ec_sign.$(TEST_EXTENSION): $(CRYPTO_LIB_PATH) $(PATHO)test_ec_sign.o $(PATHO)ec_sign.o $(PATHO)ec_verify.o $(PATHO)ec_key_recovery.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
 	$(LINK) -o $@ $^ -l$(CRYPTO_LIB) -lc
 # ifeq must not be indented
 ifeq ($(shell uname -s),Darwin)
 	install_name_tool -change /usr/local/lib/libcrypto.3.dylib @rpath/libcrypto.3.dylib $@
 endif
 
-$(PATHB)test_%.$(TEST_EXTENSION): $(PATHO)test_%.o $(PATHO)%.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
+$(PATHB)test_%.$(TEST_EXTENSION): $(CRYPTO_LIB_PATH) $(PATHO)test_%.o $(PATHO)%.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
 	$(LINK) -o $@ $^ -l$(CRYPTO_LIB) -lc
 # ifeq must not be indented
 ifeq ($(shell uname -s),Darwin)
@@ -124,6 +124,7 @@ clean:
 	$(CLEANUP) $(PATHB)*.$(TEST_EXTENSION)
 	$(CLEANUP) $(PATHR)*.txt
 	$(CLEANUP) $(PATHRE)*.$(LIBRARY_EXTENSION) $(PATHRE)*.h
+	$(CLEANUP) $(PATHL)*.*
 
 .PRECIOUS: $(PATHB)test_%.$(TEST_EXTENSION)
 .PRECIOUS: $(PATHO)%.o
