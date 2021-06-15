@@ -1,9 +1,28 @@
 version: 2.1
 
-jobs:
-  build:
+executors:
+  standard:
     docker:
-      - image: cimg/base:2021.05
+      - image: cimg/base:2021.05 
+
+jobs:
+  check-code-format:
+    executor: standard
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt-get update
+            sudo apt-get -y install clang-format
+      - run:
+          name: Check code formatting
+          command: |
+            cd src && clang-format --dry-run --Werror *.c *.h
+            cd ../test && clang-format --dry-run --Werror *.c
+
+  build:
+    executor: standard
     steps:
       - run:
           name: Install dependencies
@@ -33,4 +52,7 @@ jobs:
 workflows:
   main:
     jobs:
-      - build
+      - check-code-format
+      - build:
+          requires:
+            - check-code-format
