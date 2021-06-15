@@ -1,5 +1,8 @@
 # besu-native-ec
 
+ [![Build Status](https://circleci.com/gh/ConsenSys/besu-native-ec.svg?style=svg)](https://circleci.com/gh/ConsenSys/workflows/besu-native-ec)
+ [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/ConsenSys/besu-native-ec/blob/main/LICENSE)
+
 Besu Elliptic Curve Native Library. This C library is a wrapper for OpenSSL elliptic curve signature implementations.
 
 ## Prerequisites
