@@ -1,3 +1,15 @@
+PATHU = unity/src/
+PATHS = src/
+PATHT = test/
+PATHB = build/
+PATHO = build/objs/
+PATHR = build/results/
+PATHL = build/libs/
+PATHRE = release/
+PATHRO = build/release/objs/
+PATH_OPENSSL = openssl/
+PATH_OPENSSL_INCLUDE = openssl/include/
+
 ifeq ($(OS),Windows_NT)
   ifeq ($(shell uname -s),) # not in a bash-like shell
 	CLEANUP = del /F /Q
@@ -16,25 +28,15 @@ else
 	TEST_EXTENSION=out
 	ifeq ($(shell uname -s),Darwin) # on MacOS
 		LIBRARY_EXTENSION=dylib
+		OPENSSL_LIB_CRYPTO=$(PATH_OPENSSL)libcrypto.3.$(LIBRARY_EXTENSION)
 	else # on Linux
 		LIBRARY_EXTENSION=so
+		OPENSSL_LIB_CRYPTO=$(PATH_OPENSSL)libcrypto.$(LIBRARY_EXTENSION).3
 	endif
 endif
 
 .PHONY: clean
 .PHONY: test
-
-PATHU = unity/src/
-PATHS = src/
-PATHT = test/
-PATHB = build/
-PATHO = build/objs/
-PATHR = build/results/
-PATHL = build/libs/
-PATHRE = release/
-PATHRO = build/release/objs/
-PATH_OPENSSL = openssl/
-PATH_OPENSSL_INCLUDE = openssl/include/
 
 CRYPTO_LIB=besu_native_ec_crypto
 CRYPTO_LIB_PATH=$(PATHL)lib$(CRYPTO_LIB).$(LIBRARY_EXTENSION)
@@ -69,14 +71,14 @@ $(PATHB)test_ec_sign.$(TEST_EXTENSION): $(CRYPTO_LIB_PATH) $(PATHO)test_ec_sign.
 	$(LINK) -o $@ $^ -l$(CRYPTO_LIB) -lc
 # ifeq must not be indented
 ifeq ($(shell uname -s),Darwin)
-	install_name_tool -change /usr/local/lib/libcrypto.3.dylib @rpath/libcrypto.3.dylib $@
+	install_name_tool -change /usr/local/lib/libcrypto.3.dylib $(CRYPTO_LIB_PATH) $@
 endif
 
 $(PATHB)test_%.$(TEST_EXTENSION): $(CRYPTO_LIB_PATH) $(PATHO)test_%.o $(PATHO)%.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
 	$(LINK) -o $@ $^ -l$(CRYPTO_LIB) -lc
 # ifeq must not be indented
 ifeq ($(shell uname -s),Darwin)
-	install_name_tool -change /usr/local/lib/libcrypto.3.dylib @rpath/libcrypto.3.dylib $@
+	install_name_tool -change /usr/local/lib/libcrypto.3.dylib $(CRYPTO_LIB_PATH) $@
 endif
 
 $(PATHO)%.o:: $(PATHT)%.c
@@ -107,8 +109,10 @@ $(PATHL):
 	$(MKDIR) $(PATHL)
 
 $(CRYPTO_LIB_PATH): $(PATHL)
-	$(COPY) $(PATH_OPENSSL)libcrypto.$(LIBRARY_EXTENSION).3 $@
+	$(COPY) $(OPENSSL_LIB_CRYPTO) $@
+ifeq ($(shell uname -s),Linux)
 	patchelf --set-soname lib$(CRYPTO_LIB).$(LIBRARY_EXTENSION) $@
+endif
 
 release_build: $(PATHRO)constants.o $(PATHRO)ec_key.o $(PATHRO)ec_key_recovery.o $(PATHRO)ec_sign.o $(PATHRO)ec_verify.o $(PATHRO)utils.o
 	$(LINK) $^ -l$(CRYPTO_LIB) -fPIC -shared -o $(PATHRE)libbesu_native_ec.$(LIBRARY_EXTENSION)
