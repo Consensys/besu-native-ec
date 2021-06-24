@@ -36,7 +36,8 @@ After cloning the project you need to initialize the Git submodule which points 
 This needs to be done only once.
 
 ## Building
-To compile the library after any changes and execute the test execute
+To compile the library after any changes and execute the test execute. This will create a release build as well, which will be in the directory `release`.
 ```
 ./build.sh
 ```
+
