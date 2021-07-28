@@ -34,14 +34,15 @@ struct verify_result p256_verify(const char data_hash[],
   static const uint8_t P256_PUBLIC_KEY_LENGTH = 64;
 
   return verify(data_hash, data_hash_length, signature_r_hex, signature_s_hex,
-                public_key_data, P256_PUBLIC_KEY_LENGTH, "prime256v1");
+                public_key_data, P256_PUBLIC_KEY_LENGTH, "prime256v1",
+                NID_X9_62_prime256v1);
 }
 
 struct verify_result verify(const char data_hash[], const int data_hash_length,
                             const char signature_r_arr[],
                             const char signature_s_arr[],
                             const char public_key_data[], int public_key_len,
-                            const char *group_name) {
+                            const char *group_name, int curve_nid) {
   struct verify_result result = {.verified = GENERIC_ERROR,
                                  .error_message = {0}};
 
@@ -49,13 +50,28 @@ struct verify_result verify(const char data_hash[], const int data_hash_length,
   unsigned char *der_encoded_signature = NULL;
   EVP_PKEY_CTX *verify_context = NULL;
 
+  int signature_arr_len = public_key_len / 2;
+  int is_canonicalized = 0;
+
+  if ((is_canonicalized = is_signature_canonicalized(
+           signature_s_arr, signature_arr_len, curve_nid,
+           result.error_message)) == GENERIC_ERROR) {
+    goto end;
+  }
+
+  if (is_canonicalized == 1) {
+    set_error_message(result.error_message,
+                      "Signature is not canonicalized. s of signature must not "
+                      "be greater than n / 2: ");
+    goto end;
+  }
+
   if (create_public_key(&key, result.error_message,
                         (const unsigned char *)public_key_data, public_key_len,
                         group_name) != SUCCESS) {
     goto end;
   }
 
-  int signature_arr_len = public_key_len / 2;
   int der_encoded_signature_len = 0;
   if (create_der_encoded_signature(
           &der_encoded_signature, &der_encoded_signature_len,
@@ -93,6 +109,51 @@ end:
   EVP_PKEY_CTX_free(verify_context);
 
   return result;
+}
+
+int is_signature_canonicalized(const char signature_s_arr[],
+                               const int signature_arr_len, const int curve_nid,
+                               char *error_message) {
+  int ret = GENERIC_ERROR;
+
+  BIGNUM *s = NULL;
+  BIGNUM *n = NULL;      // curve order
+  BIGNUM *n_half = NULL; // half curve order
+
+  if ((n = get_curve_order(curve_nid, error_message)) == NULL) {
+    goto end_is_signature_canonicalized;
+  }
+
+  if ((n_half = BN_new()) == NULL) {
+    set_error_message(error_message,
+                      "Could not allocate memory to store curve order: ");
+    goto end_is_signature_canonicalized;
+  }
+
+  // shift n right by 1 byte, which equals a division by 2
+  if (BN_rshift1(n_half, n) != SUCCESS) {
+    set_error_message(error_message,
+                      "Could not calculate the half curve order: ");
+    goto end_is_signature_canonicalized;
+  }
+
+  if ((s = BN_bin2bn((const unsigned char *)signature_s_arr, signature_arr_len,
+                     s)) == NULL) {
+    set_error_message(error_message,
+                      "Could not convert s of signature to BIGNUM: ");
+    goto end_is_signature_canonicalized;
+  }
+
+  // if BN_cmp returns 1 it means s is greater than n_half,
+  // this means it is NOT canonicalized
+  ret = BN_cmp(s, n_half) != 1;
+
+end_is_signature_canonicalized:
+  BN_free(s);
+  BN_free(n);
+  BN_free(n_half);
+
+  return ret;
 }
 
 int create_der_encoded_signature(unsigned char **der_encoded_signature,

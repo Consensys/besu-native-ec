@@ -21,9 +21,12 @@
 extern "C" {
 #endif
 
+#include <openssl/include/openssl/ec.h>
+
 void set_error_message(char *error_message, const char *message_prefix);
 unsigned char *hex_to_bin(const char *hex_string);
 char *hex_arr_to_str(const char *p, int p_len);
+BIGNUM *get_curve_order(const int curve_nid, char *error_message);
 
 #ifdef __cplusplus
 extern

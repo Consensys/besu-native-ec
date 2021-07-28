@@ -35,6 +35,9 @@ ECDSA_SIG *create_signature(EVP_PKEY *key, char *error_message,
                             const unsigned char *data_hash,
                             const size_t data_hash_length);
 
+int canonicalize_signature(const ECDSA_SIG *signature, char *error_message,
+                           const int curve_nid);
+
 int signature_to_bin_values(const ECDSA_SIG *signature, char *error_message,
                             char **signature_r, char **signature_s,
                             const int signature_len);

@@ -27,7 +27,7 @@ struct verify_result verify(const char data_hash[], const int data_hash_length,
                             const char signature_r_hex[],
                             const char signature_s_hex[],
                             const char public_key_data[], int public_key_len,
-                            const char *group_name);
+                            const char *group_name, int curve_nid);
 
 int create_der_encoded_signature(unsigned char **der_encoded_signature,
                                  int *der_encoded_signature_len,
@@ -35,6 +35,11 @@ int create_der_encoded_signature(unsigned char **der_encoded_signature,
                                  const char signature_r_arr[],
                                  const char signature_s_arr[],
                                  int signature_arr_len);
+
+int is_signature_canonicalized(const char signature_s_arr[],
+                               const int signature_arr_len, const int curve_nid,
+                               char *error_message);
+
 #ifdef __cplusplus
 extern
 }
