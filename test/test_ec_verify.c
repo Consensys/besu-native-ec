@@ -70,6 +70,15 @@ void p256_verify_should_verify_signatures_according_to_test_vectors(void) {
 
     TEST_ASSERT_EQUAL_INT(test_vectors[i].result, result.verified);
 
+    if (test_vectors[i].result == ERROR_NOT_CANONICALIZED) {
+      TEST_ASSERT_EQUAL_STRING(
+          "Signature is not canonicalized. s of signature must not be greater "
+          "than n / 2: : error:00000000:lib(0)::reason(0)\n",
+          result.error_message);
+    } else {
+      TEST_ASSERT_EQUAL_STRING("", result.error_message);
+    }
+
     free(data_bin);
     free(public_key_bin);
     free(signature_r_bin);

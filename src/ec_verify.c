@@ -59,7 +59,7 @@ struct verify_result verify(const char data_hash[], const int data_hash_length,
     goto end;
   }
 
-  if (is_canonicalized == 1) {
+  if (!is_canonicalized) {
     set_error_message(result.error_message,
                       "Signature is not canonicalized. s of signature must not "
                       "be greater than n / 2: ");

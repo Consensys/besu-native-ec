@@ -19,6 +19,7 @@
 
 const int VERIFICATION_FAILED = 0;
 const int VERIFICATION_SUCCESS = 1;
+const int ERROR_NOT_CANONICALIZED = -1;
 
 enum HASH_FUNCTION_ID { SHA_224, SHA_256, SHA_384, SHA_512 };
 
@@ -50,7 +51,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"8d46a204054125d0dc776ab1055302ec4eb0f20b90bca6d205f21d3cefd29097"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_SUCCESS},
+     .result = ERROR_NOT_CANONICALIZED},
     {.data =
          {"a122dd3120879b6d288f1a4fce115899fa5a4a273621b022429284df2905a5f00eec"
           "eb4c3d57d17f1092b8bd11aac2768f69e82d4698170a028fe8b01625656eab963d07"
@@ -92,7 +93,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"fecc400bf0deab99d87da168b9d0dd31d2dfa3435b0fe9d38b5fb8efd45195a4"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_FAILED}, // (2 - R changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (2 - R changed)
     {.data =
          {"5201328490b8f88a1bd31e16359e9a0770691313da5140575ca460d398f3d26ae4fa"
           "32fcc4aa522c9597333a20bbc0986235410f861522584a382b7c197a9f90a6742e18"
@@ -106,7 +107,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"d0c02c71b14ef7a4af4e23bd207ce98449f5d6e7e5b3ec8cbbca9549e97d379d"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_SUCCESS},
+     .result = ERROR_NOT_CANONICALIZED},
     {.data =
          {"2c3af4a121b896c59437abf6e58c21ca6cc45af7a405515a7a253554264735dbd613"
           "9cf27316c6d0454c5729ee770116c267844e4a4e72bf6d3a4a050cf274bdd9730235"
@@ -120,7 +121,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"adaaad19b7c66836ef0f4afeff8ac5e898cd2523246a74a1a291a3a1ff583322"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_SUCCESS},
+     .result = ERROR_NOT_CANONICALIZED},
     {.data =
          {"f7afb86bb6943f7c0108c31185102a323311011529b95ffc0a9a22b63e310f50a948"
           "13089c2541d4f864ba1e9dd275cf5abfa79d5126e8164f1c1f78fecc0d24808cf519"
@@ -134,7 +135,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"94c0220f0f3fa66ff24f96717f464b66ae3a7b0f228ab6a0b5775038da13768a"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"dfd611caa868f764527c54f144dcabcab1fa7722882bfe293a15b35b0250d3936466"
           "df4eb1f87e053295290ba34390e6efcd64677a8771d48cf8aefb59951d47149c95f9"
@@ -148,7 +149,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"e381e7b32bab49578c7e7ce7784ce19263e4a7dab4b614df411d20eaebfc391c"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_FAILED}, // (1 - Message changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (1 - Message changed)
     {.data =
          {"6707e3bb71ce50247337cba8b70a684fdd1d2c7bb677b999e0766e31f380ae658bba"
           "06094d89a0c344cbc7425a093c1382f1d2d3670ee4292928a472126a9c7e48acbe3f"
@@ -162,7 +163,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"a0477f97b94a1c26a3b2d186791d7fc9dfa8130bbae79c28fa11ec93a3aeac0b"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_FAILED}, // (1 - Message changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (1 - Message changed)
     {.data =
          {"e166218ec72b1c41c436305949417c607c02607318fba65659b0c6e484f2ef3a814b"
           "056b1f4ac3d8bfacce79c1d21fe0f9e76714a540dab55c9a22b5d4d2877cdd8f9ef5"
@@ -218,7 +219,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"b9ded660e978129277f74c1d436003d1e6d556dc8eed9d505bbaf4c67cb13d21"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"0a04ccd0555acac9e47faff6b6dea1f422e4aec83029795d8b9063bbd2e5306e0977"
           "cde1b9d78e005f0e3f3d004e95c87ba5b526f1eb9843e1de8cbf3f2d31b41eabc2ff"
@@ -232,7 +233,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"beb4c27c748a7944e37afe861576f76b5a749a8ccbbd7dec00838ba250ddfe1a"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"7b11d09b5e7971ac07919f902c59e4490c70d1ecc3f56b625fa836b056187b2a95f7"
           "52e60546c871b509201e9109085c1fd607d677cfc96780f12c3c2640b36d03b72dff"
@@ -246,7 +247,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"871237039431a41aeefcdd08f67848b2b09067e3a1344c8ed9b372d1b1c754a6"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_FAILED}, // (3 - S changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (3 - S changed)
     {.data =
          {"e4796db5f785f207aa30d311693b3702821dff1168fd2e04c0836825aefd850d9aa6"
           "0326d88cde1a23c7745351392ca2288d632c264f197d05cd424a30336c19fd09bb22"
@@ -260,7 +261,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"a3e81e59311cdfff2d4784949f7a2cb50ba6c3a91fa54710568e61aca3e847c6"},
      .hash_function_id = SHA_256,
-     .result = VERIFICATION_FAILED}, // (3 - S changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (3 - S changed)
     {.data =
          {"069a6e6b93dfee6df6ef6997cd80dd2182c36653cef10c655d524585655462d68387"
           "7f95ecc6d6c81623d8fac4e900ed0019964094e7de91f1481989ae1873004565789c"
@@ -274,7 +275,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"d6ce7708c18dbf35d4f8aa7240922dc6823f2e7058cbc1484fcad1599db5018c"},
      .hash_function_id = SHA_256,
-     .result = VERIFICATION_FAILED}, // (2 - R changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (2 - R changed)
     {.data =
          {"df04a346cf4d0e331a6db78cca2d456d31b0a000aa51441defdb97bbeb20b94d8d74"
           "6429a393ba88840d661615e07def615a342abedfa4ce912e562af714959896858af8"
@@ -288,7 +289,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"9467cd4cd21ecb56b0cab0a9a453b43386845459127a952421f5c6382866c5cc"},
      .hash_function_id = SHA_256,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"e1130af6a38ccb412a9c8d13e15dbfc9e69a16385af3c3f1e5da954fd5e7c45fd75e"
           "2b8c36699228e92840c0562fbf3772f07e17f1add56588dd45f7450e1217ad239922"
@@ -316,7 +317,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"cb2acb01dac96efc53a32d4a0d85d0c2e48955214783ecf50a4f0414a319c05a"},
      .hash_function_id = SHA_256,
-     .result = VERIFICATION_SUCCESS},
+     .result = ERROR_NOT_CANONICALIZED},
     {.data =
          {"666036d9b4a2426ed6585a4e0fd931a8761451d29ab04bd7dc6d0c5b9e38e6c2b263"
           "ff6cb837bd04399de3d757c6c7005f6d7a987063cf6d7e8cb38a4bf0d74a282572bd"
@@ -329,7 +330,7 @@ struct test_vector test_vectors[] = {
          {"25acc3aa9d9e84c7abf08f73fa4195acc506491d6fc37cb9074528a7db87b9d6"},
      .signature_s =
          {"9b21d5b5259ed3f2ef07dfec6cc90d3a37855d1ce122a85ba6a333f307d31537"},
-     .result = VERIFICATION_FAILED}, // (2 - R changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (2 - R changed)
     {.data =
          {"7e80436bce57339ce8da1b5660149a20240b146d108deef3ec5da4ae256f8f894edc"
           "bbc57b34ce37089c0daa17f0c46cd82b5a1599314fd79d2fd2f446bd5a25b8e32fcf"
@@ -343,7 +344,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"e93bfebd2f14f3d827ca32b464be6e69187f5edbd52def4f96599c37d58eee75"},
      .hash_function_id = SHA_256,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"1669bfb657fdc62c3ddd63269787fc1c969f1850fb04c933dda063ef74a56ce13e3a"
           "649700820f0061efabf849a85d474326c8a541d99830eea8131eaea584f22d88c353"
@@ -399,7 +400,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"cfca7ed3d4347fb2a29e526b43c348ae1ce6c60d44f3191b6d8ea3a2d9c92154"},
      .hash_function_id = SHA_256,
-     .result = VERIFICATION_FAILED}, // (3 - S changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (3 - S changed)
     {.data =
          {"0a3a12c3084c865daf1d302c78215d39bfe0b8bf28272b3c0b74beb4b7409db07182"
           "39de700785581514321c6440a4bbaea4c76fa47401e151e68cb6c29017f0bce46312"
@@ -413,7 +414,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"8f780ad713f9c3e5a4f7fa4c519833dfefc6a7432389b1e4af463961f09764f2"},
      .hash_function_id = SHA_256,
-     .result = VERIFICATION_FAILED}, // (1 - Message changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (1 - Message changed)
     {.data =
          {"785d07a3c54f63dca11f5d1a5f496ee2c2f9288e55007e666c78b007d95cc28581dc"
           "e51f490b30fa73dc9e2d45d075d7e3a95fb8a9e1465ad191904124160b7c60fa720e"
@@ -427,7 +428,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"a4f90e560c5e4eb8696cb276e5165b6a9d486345dedfb094a76e8442d026378d"},
      .hash_function_id = SHA_256,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"76f987ec5448dd72219bd30bf6b66b0775c80b394851a43ff1f537f140a6e7229ef8"
           "cd72ad58b1d2d20298539d6347dd5598812bc65323aceaf05228f738b5ad3e8d9fe4"
@@ -441,7 +442,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"9c9c045ebaa1b828c32f82ace0d18daebf5e156eb7cbfdc1eff4399a8a900ae7"},
      .hash_function_id = SHA_256,
-     .result = VERIFICATION_FAILED}, // (1 - Message changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (1 - Message changed)
     {.data =
          {"60cd64b2cd2be6c33859b94875120361a24085f3765cb8b2bf11e026fa9d8855dbe4"
           "35acf7882e84f3c7857f96e2baab4d9afe4588e4a82e17a78827bfdb5ddbd1c211fb"
@@ -483,7 +484,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"97363a05202b602d13166346694e38135bbce025be94950e9233f4c8013bf5bf"},
      .hash_function_id = SHA_384,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"d2fcaaede8b879c064b0aa46e68efc278a469b80a7f7e1939ec2ebc96c76206f2339"
           "5967279c181fea157ebb79dfadc68e31345f07f13305c80de0d85e4330d3a45f957c"
@@ -539,7 +540,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"b4e75ac34a96393237fc4337789e37168d79382705b248051c9c72bcbac5f516"},
      .hash_function_id = SHA_384,
-     .result = VERIFICATION_FAILED}, // (2 - R changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (2 - R changed)
     {.data =
          {"a996b1fb800f692517a2eb80e837233193dd3e82484d3f49bd19ee0db8f7b440876b"
           "07e384c90aa8b9f7b6603ca0b5a4e06c1da0edb974a2fb9b6e7c720ddf3e5c0e314c"
@@ -553,7 +554,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"baae01e9e44a7b04d69c8eaaed77c9e3a36ce8962f95cc50a0db146b4e49eb40"},
      .hash_function_id = SHA_384,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"1a6e49a377a08e992353d6acc557b687b1b69a41d83d43a75fadb97b8c928cfebade"
           "baaf99ea7fb13148807f56ea17384a7912e578e62b1b009fefb2aafca5ac85539433"
@@ -567,7 +568,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"85f560273cd9e82e6801e4cb1c8cd29cdac34a020da211d77453756b604b8fa7"},
      .hash_function_id = SHA_384,
-     .result = VERIFICATION_SUCCESS},
+     .result = ERROR_NOT_CANONICALIZED},
     {.data =
          {"3e14f737c913931bc82764ebc440b12e3ce1ffe0f858c7b8f1cbd30fbbb1644fa59b"
           "e1d2cca5f64a6d7dc5ed5c4420f39227516ae8eb3019ef86274d0e4d06cde7bf5e5c"
@@ -609,7 +610,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"e65c232bd915b59e087e7fd5ec90bf636cfa80526345c79a0adfd75003045d6f"},
      .hash_function_id = SHA_384,
-     .result = VERIFICATION_FAILED}, // (1 - Message changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (1 - Message changed)
     {.data =
          {"aa563223a7d5201febdf13cab80a03dce6077c26e751bc98a941196a28848abc495e"
           "0324013c9a2094fb15dc65d100c3e8a136a52c1780b395f42588900b641b6d436143"
@@ -637,7 +638,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"8546e1ee3b77f9927cdaccbc2f1cf19d6b5576b0f738bb1b86a0c66b39ca56fb"},
      .hash_function_id = SHA_384,
-     .result = VERIFICATION_FAILED}, // (3 - S changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (3 - S changed)
     {.data =
          {"bb6b03ad60d6ddbf0c4d17246206e61c886f916d252bb4608149da49cef903348408"
           "0e861f91bb2400baa0cd6c5d90c2f275e2fabc12d83847f7a1c3ff0eb40c8a3dd83d"
@@ -651,7 +652,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"8a6c1edeb6452627ad27c8319599c54ac44cdd831ea66f13f49d90affe6ad45b"},
      .hash_function_id = SHA_384,
-     .result = VERIFICATION_SUCCESS},
+     .result = ERROR_NOT_CANONICALIZED},
     {.data =
          {"33a5d489f671f396c776bc1acf193bc9a74306f4692dd8e05bcdfe28fdefbd5c09b8"
           "31c204a1dec81d8e3541f324f7b474d692789013bb1eca066f82fbf3f1cf3ba64e9d"
@@ -679,7 +680,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"e152119cefa26826ea07ec40a428869132d70812c5578c5a260e48d6800e046a"},
      .hash_function_id = SHA_512,
-     .result = VERIFICATION_FAILED}, // (1 - Message changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (1 - Message changed)
     {.data =
          {"d64ea1a768b0de29ab018ae93baa645d078c70a2f7aa4acd4ae7526538ebd5f697a1"
           "1927cfd0ddc9187c095f14ad30544cb63ede9353af8b23c18ce22843881fe2d7bde7"
@@ -693,7 +694,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"881328cd91e43d30133f6e471e0b9b04353b17893fb7614fd7333d812a3df6b4"},
      .hash_function_id = SHA_512,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"1db85445c9d8d1478a97dd9d6ffbf11ebcd2114d2ed4e8b6811171d947e7d4daedea"
           "35af6177debe2ef6d93f94ff9d770b45d458e91deb4eef59856425d7b00291aff9b6"
@@ -707,7 +708,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"a03c6f5c54a10861d6b8922821708e9306fd6d5d10d566845a106539cbf4fadd"},
      .hash_function_id = SHA_512,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"918d9f420e927b3e0a55d276b8b40d8a2c5df748727ff72a438c7e6593f542274050"
           "dce727980d3ef90c8aa5c13d53f1e8d631ebb650dee11b94902bbd7c92b8186af903"
@@ -749,7 +750,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"852f4cbfd346e90f404e1dd5c4b2c1debca3ea1abefe8400685d703aea6c5c7f"},
      .hash_function_id = SHA_512,
-     .result = VERIFICATION_FAILED}, // (4 - Q changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (4 - Q changed)
     {.data =
          {"fd2e5de421ee46c9fe6290a33f95b394bd5b7762f23178f7f6834f1f056fa9a88314"
           "46403c098ff4dd764173f974be4c89d376119613a4a1890f6fc2ddff862bda292dd4"
@@ -763,7 +764,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"86b0341208a0aa55edecfd272f49cb34408ce54b7febc1d0a1c2ce77ab6988f8"},
      .hash_function_id = SHA_512,
-     .result = VERIFICATION_FAILED}, // (3 - S changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (3 - S changed)
     {.data =
          {"4bc2d9a898395b12701635f1048fbfd263ec115e4150532b034d59e625238f4ed326"
           "19744c612e35ac5a23bee8d5f5651641a492217d305e5051321c273647f14bc7c4af"
@@ -777,7 +778,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"a204eaa4e97d7553a1521d9f6baadc0b6d6183ba0f385d8593d6ca83607c4d82"},
      .hash_function_id = SHA_512,
-     .result = VERIFICATION_FAILED}, // (2 - R changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (2 - R changed)
     {.data =
          {"d3356a683417508a9b913643e6ceac1281ef583f428968f9d2b6540a189d7041c477"
           "da8d207d0529720f70dab6b0da8c2168837476c1c6b63b517ed3cad48ae331cf716e"
@@ -819,7 +820,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"f20dc01bf38e1344ba675a22239d9893b3a3e33d9a403329a3d21650e9125b75"},
      .hash_function_id = SHA_512,
-     .result = VERIFICATION_SUCCESS},
+     .result = ERROR_NOT_CANONICALIZED},
     {.data =
          {"e75be05be0aaf70719b488b89aaae9008707ca528994461db7130c4368575a024bf0"
           "981c305d61265e8b97599ec35c03badd1256b80d6bf70547ad6089b983e3bcc34818"
@@ -847,7 +848,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"df599c3a37105af3ecc159b3b685ccb3e151b7d5cf2d97147974ae71f466b615"},
      .hash_function_id = SHA_512,
-     .result = VERIFICATION_FAILED}, // (3 - S changed)
+     .result = ERROR_NOT_CANONICALIZED}, // (3 - S changed)
     {.data =
          {"d55e5e124a7217879ca986f285e22ac51940b35959bbf5543104b5547356fd1a0ec3"
           "7c0a23209004a2ec5bcaf3335bc45e4dc990eacd29b2d9b5cf349c7ba67711356299"
