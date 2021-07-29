@@ -67,7 +67,7 @@ jobs:
       - run:
           name: Check for memory leaks
           command: |
-            ls build/test_*.out | xargs -n 1 valgrind --leak-check=full --error-exitcode=255
+            ls /tmp/workspace/test_*.out | xargs -n 1 valgrind --leak-check=full --error-exitcode=255
 workflows:
   main:
     jobs:
