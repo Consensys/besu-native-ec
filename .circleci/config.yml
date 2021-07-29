@@ -52,13 +52,14 @@ jobs:
           root: build
           paths:
             - test_*.out
+            - libs
 
   check-memory-leaks:
     executor: standard
     steps:
       - checkout
       - attach_workspace:
-          at: /tmp/workspace
+          at: build
       - run:
           name: Install dependencies
           command: |
@@ -67,7 +68,7 @@ jobs:
       - run:
           name: Check for memory leaks
           command: |
-            ls /tmp/workspace/test_*.out | xargs -n 1 valgrind --leak-check=full --error-exitcode=255
+            ls build/test_*.out | xargs -n 1 valgrind --leak-check=full --error-exitcode=255
 workflows:
   main:
     jobs:
