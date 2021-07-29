@@ -55,6 +55,8 @@ PASSED = `grep -s PASS $(PATHR)*.txt`
 FAIL = `grep -s FAIL $(PATHR)*.txt`
 IGNORE = `grep -s IGNORE $(PATHR)*.txt`
 
+FAILURES = `bash -c '$(FAIL) | wc -w`
+
 test: $(BUILD_PATHS) $(RESULTS) $(CRYPTO_LIB_PATH)
 	@echo "-----------------------\nIGNORES:\n-----------------------"
 	@echo "$(IGNORE)"
@@ -63,6 +65,8 @@ test: $(BUILD_PATHS) $(RESULTS) $(CRYPTO_LIB_PATH)
 	@echo "-----------------------\nPASSED:\n-----------------------"
 	@echo "$(PASSED)"
 	@echo "\nDONE"
+
+	./check_failing_test.sh
 
 $(PATHR)%.txt: $(PATHB)%.$(TEST_EXTENSION)
 	-./$< > $@ 2>&1
