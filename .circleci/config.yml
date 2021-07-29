@@ -48,7 +48,26 @@ jobs:
           name: Build project
           command: |
             make
+      - persist_to_workspace:
+          root: build
+          paths:
+            - test_*.out
 
+  check-memory-leaks:
+    executor: standard
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt-get update
+            sudo apt-get -y install valgrind
+      - run:
+          name: Check for memory leaks
+          command: |
+            ls build/test_*.out | xargs -n 1 valgrind --leak-check=full --error-exitcode=255
 workflows:
   main:
     jobs:
@@ -56,3 +75,6 @@ workflows:
       - build:
           requires:
             - check-code-format
+      - check-memory-leaks:
+          requires:
+            - build
