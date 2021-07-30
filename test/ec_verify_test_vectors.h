@@ -65,7 +65,7 @@ struct test_vector test_vectors[] = {
      .signature_s =
          {"407e41217325f92f8a031cfcc4eb64c1a4b17b0a7459c254af754a7ea9eac997"},
      .hash_function_id = SHA_224,
-     .result = VERIFICATION_SUCCESS}, // (3 - S changed)
+     .result = VERIFICATION_FAILED}, // (3 - S changed)
     {.data =
          {"f8c9f5e424bc4fd18b6d103ad110f1c33976c337b0f8bb98ac936ce172bf218256c5"
           "f71a08d3365ee3498193d916065033c323827a0acb1cfc1f09ce40005b9cecc316f3"
