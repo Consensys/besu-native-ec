@@ -64,6 +64,8 @@ test: $(BUILD_PATHS) $(RESULTS) $(CRYPTO_LIB_PATH)
 	@echo "$(PASSED)"
 	@echo "\nDONE"
 
+	./check_failing_test.sh
+
 $(PATHR)%.txt: $(PATHB)%.$(TEST_EXTENSION)
 	-./$< > $@ 2>&1
 
