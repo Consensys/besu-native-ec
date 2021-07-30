@@ -248,7 +248,9 @@ int signature_to_bin_values(const ECDSA_SIG *signature, char *error_message,
 
   if (BN_bn2binpad(s, (unsigned char *)*signature_s, signature_len) ==
       GENERIC_ERROR) {
-    set_error_message(error_message,"Could not convert s into its big-endian form: ");goto end_signature_to_hex_values;
+    set_error_message(error_message,
+                      "Could not convert s into its big-endian form: ");
+    goto end_signature_to_hex_values;
   }
 
   ret = SUCCESS;

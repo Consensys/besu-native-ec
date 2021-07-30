@@ -106,7 +106,7 @@ struct verify_result verify(const char data_hash[], const int data_hash_length,
 end:
   OPENSSL_free(der_encoded_signature);
   EVP_PKEY_free(key);
-  EVP_PKEY_CTX_free(verify_context);
+  //EVP_PKEY_CTX_free(verify_context);
 
   return result;
 }
