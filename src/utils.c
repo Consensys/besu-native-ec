@@ -21,6 +21,7 @@
 
 #include "openssl/include/openssl/err.h"
 
+#include "constants.h"
 #include "utils.h"
 
 void set_error_message(char *error_message, const char *message_prefix) {
@@ -77,4 +78,36 @@ char *hex_arr_to_str(const char *p, int p_len) {
   }
 
   return output;
+}
+
+BIGNUM *get_curve_order(const int curve_nid, char *error_message) {
+  EC_GROUP *group = NULL;
+  const BIGNUM *n_internal =
+      NULL;         // interal pointer to curve order of the group
+  BIGNUM *n = NULL; // curve order
+
+  if ((group = EC_GROUP_new_by_curve_name(curve_nid)) == NULL) {
+    set_error_message(error_message,
+                      "Could not get EC_GROUP for requested curve: ");
+    goto end_get_curve_order;
+  }
+
+  // returns the internal pointer of the curve order, which will be freed
+  // automatically by calling EC_GROUP_free
+  if ((n_internal = EC_GROUP_get0_order(group)) == NULL) {
+    set_error_message(error_message,
+                      "Could not convert curve order (n) to BIGNUM: ");
+    goto end_get_curve_order;
+  }
+
+  // duplicate value of n in order to able to return it
+  if ((n = BN_dup(n_internal)) == NULL) {
+    set_error_message(error_message, "Could not copy curve order: ");
+    goto end_get_curve_order;
+  }
+
+end_get_curve_order:
+  EC_GROUP_free(group);
+
+  return n;
 }

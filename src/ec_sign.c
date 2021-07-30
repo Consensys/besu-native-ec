@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "openssl/include/openssl/evp.h"
+#include <openssl/include/openssl/ec.h>
 
 #include "besu_native_ec.h"
 #include "constants.h"
@@ -71,6 +72,11 @@ struct sign_result sign(const char data_hash[], const int data_hash_len,
   if ((signature = create_signature(key, result.error_message,
                                     (const unsigned char *)data_hash,
                                     data_hash_len)) == NULL) {
+    goto end;
+  }
+
+  if (canonicalize_signature(signature, result.error_message, curve_nid) !=
+      SUCCESS) {
     goto end;
   }
 
@@ -159,6 +165,57 @@ end_create_signature:
   OPENSSL_free(der_encoded_signature);
 
   return signature;
+}
+
+int canonicalize_signature(const ECDSA_SIG *signature, char *error_message,
+                           const int curve_nid) {
+  int ret = GENERIC_ERROR;
+
+  const BIGNUM *r = NULL;
+  BIGNUM *s = NULL;
+  BIGNUM *n = NULL;      // curve order
+  BIGNUM *n_half = NULL; // half curve order
+
+  if ((n = get_curve_order(curve_nid, error_message)) == NULL) {
+    goto end_canonicalize_signature;
+  }
+
+  if ((n_half = BN_new()) == NULL) {
+    set_error_message(error_message,
+                      "Could not allocate memory to store curve order: ");
+    goto end_canonicalize_signature;
+  }
+
+  // shift n right by 1 byte, which equals a division by 2
+  if (BN_rshift1(n_half, n) != SUCCESS) {
+    set_error_message(error_message,
+                      "Could not calculate the half curve order: ");
+    goto end_canonicalize_signature;
+  }
+
+  ECDSA_SIG_get0(signature, &r, (const BIGNUM **)&s);
+
+  // Allowing transactions with any s value with 0 < s < n, opens a
+  // transaction malleability concern, as one can take any transaction,
+  // flip the s value from s to n - s, flip the v value (27 -> 28, 28 -> 27),
+  // and the resulting signature would still be valid. Therefore EIP-2 defined
+  // that only s values lesser than n / s are valid.
+  if (BN_cmp(s, n_half) == 1) {
+    if (BN_sub(s, n, s) != SUCCESS) {
+      set_error_message(
+          error_message,
+          "Could not subtract s from n to create a canonicalized signature: ");
+      goto end_canonicalize_signature;
+    }
+  }
+
+  ret = SUCCESS;
+
+end_canonicalize_signature:
+  BN_free(n);
+  BN_free(n_half);
+
+  return ret;
 }
 
 int signature_to_bin_values(const ECDSA_SIG *signature, char *error_message,
