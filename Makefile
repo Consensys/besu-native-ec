@@ -84,13 +84,13 @@ ifeq ($(shell uname -s),Darwin)
 endif
 
 $(PATHO)%.o:: $(PATHT)%.c
-	$(COMPILE) --debug $(COMPILE_FLAGS) $< -o $@
+	$(COMPILE) --debug $(CFLAGS) $(COMPILE_FLAGS) $< -o $@
 
 $(PATHO)%.o:: $(PATHS)%.c
-	$(COMPILE) --debug $(COMPILE_FLAGS) $< -o $@
+	$(COMPILE) --debug $(CFLAGS) $(COMPILE_FLAGS) $< -o $@
 
 $(PATHO)%.o:: $(PATHU)%.c $(PATHU)%.h
-	$(COMPILE) --debug $(COMPILE_FLAGS) $< -o $@
+	$(COMPILE) --debug $(CFLAGS) $(COMPILE_FLAGS) $< -o $@
 
 $(PATHB):
 	$(MKDIR) $(PATHB)
@@ -122,7 +122,7 @@ release_build: $(PATHRO)constants.o $(PATHRO)ec_key.o $(PATHRO)ec_key_recovery.o
 	$(COPY) $(CRYPTO_LIB_PATH) $(PATHRE)
 
 $(PATHRO)%.o: $(PATHS)%.c $(PATHRO) $(PATHRE)
-	$(COMPILE) $(COMPILE_FLAGS) $< -o $@
+	$(COMPILE) $(CFLAGS) $(COMPILE_FLAGS) $< -o $@
 
 clean:
 	$(CLEANUP) $(PATHO)*.o
