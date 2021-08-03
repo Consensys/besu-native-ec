@@ -47,7 +47,7 @@ SRCT = $(wildcard $(PATHT)*.c)
 
 COMPILE=gcc -c -Wall -Werror -std=c11 -O3 -fPIC
 LINK=gcc -L$(PATHL) -Wl,-rpath $(PATHL)
-CFLAGS=-I. -I$(PATHU) -I$(PATHS) -I$(PATH_OPENSSL_INCLUDE) -DTEST
+COMPILE_FLAGS=-I. -I$(PATHU) -I$(PATHS) -I$(PATH_OPENSSL_INCLUDE) -DTEST
 
 RESULTS = $(patsubst $(PATHT)test_%.c,$(PATHR)test_%.txt,$(SRCT) )
 
@@ -84,13 +84,13 @@ ifeq ($(shell uname -s),Darwin)
 endif
 
 $(PATHO)%.o:: $(PATHT)%.c
-	$(COMPILE) --debug $(CFLAGS) $< -o $@
+	$(COMPILE) --debug $(COMPILE_FLAGS) $< -o $@
 
 $(PATHO)%.o:: $(PATHS)%.c
-	$(COMPILE) --debug $(CFLAGS) $< -o $@
+	$(COMPILE) --debug $(COMPILE_FLAGS) $< -o $@
 
 $(PATHO)%.o:: $(PATHU)%.c $(PATHU)%.h
-	$(COMPILE) --debug $(CFLAGS) $< -o $@
+	$(COMPILE) --debug $(COMPILE_FLAGS) $< -o $@
 
 $(PATHB):
 	$(MKDIR) $(PATHB)
@@ -122,7 +122,7 @@ release_build: $(PATHRO)constants.o $(PATHRO)ec_key.o $(PATHRO)ec_key_recovery.o
 	$(COPY) $(CRYPTO_LIB_PATH) $(PATHRE)
 
 $(PATHRO)%.o: $(PATHS)%.c $(PATHRO) $(PATHRE)
-	$(COMPILE) $(CFLAGS) $< -o $@
+	$(COMPILE) $(COMPILE_FLAGS) $< -o $@
 
 clean:
 	$(CLEANUP) $(PATHO)*.o
