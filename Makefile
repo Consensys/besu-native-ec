@@ -70,14 +70,14 @@ $(PATHR)%.txt: $(PATHB)%.$(TEST_EXTENSION)
 	-./$< > $@ 2>&1
 
 $(PATHB)test_ec_sign.$(TEST_EXTENSION): $(CRYPTO_LIB_PATH) $(PATHO)test_ec_sign.o $(PATHO)ec_sign.o $(PATHO)ec_verify.o $(PATHO)ec_key_recovery.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
-	$(LINK) -o $@ $^ -l$(CRYPTO_LIB) -lc
+	$(LINK) $(CFLAGS) -o $@ $^ -l$(CRYPTO_LIB) -lc
 # ifeq must not be indented
 ifeq ($(shell uname -s),Darwin)
 	install_name_tool -change /usr/local/lib/libcrypto.3.dylib $(CRYPTO_LIB_PATH) $@
 endif
 
 $(PATHB)test_%.$(TEST_EXTENSION): $(CRYPTO_LIB_PATH) $(PATHO)test_%.o $(PATHO)%.o $(PATHU)unity.o $(PATHO)constants.o $(PATHO)utils.o $(PATHO)ec_key.o
-	$(LINK) -o $@ $^ -l$(CRYPTO_LIB) -lc
+	$(LINK) $(CFLAGS) -o $@ $^ -l$(CRYPTO_LIB) -lc
 # ifeq must not be indented
 ifeq ($(shell uname -s),Darwin)
 	install_name_tool -change /usr/local/lib/libcrypto.3.dylib $(CRYPTO_LIB_PATH) $@
@@ -117,7 +117,7 @@ ifeq ($(shell uname -s),Linux)
 endif
 
 release_build: $(PATHRO)constants.o $(PATHRO)ec_key.o $(PATHRO)ec_key_recovery.o $(PATHRO)ec_sign.o $(PATHRO)ec_verify.o $(PATHRO)utils.o
-	$(LINK) $^ -l$(CRYPTO_LIB) -fPIC -shared -o $(PATHRE)libbesu_native_ec.$(LIBRARY_EXTENSION)
+	$(LINK) $^ -l$(CRYPTO_LIB) -fPIC -shared $(CFLAGS) -o $(PATHRE)libbesu_native_ec.$(LIBRARY_EXTENSION)
 	$(COPY) src/besu_native_ec.h $(PATHRE)
 	$(COPY) $(CRYPTO_LIB_PATH) $(PATHRE)
 
