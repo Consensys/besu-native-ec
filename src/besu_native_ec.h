@@ -36,7 +36,7 @@ struct sign_result {
   // 66 bytes are needed for one half of a P-521 signature
   char signature_r[66];
   char signature_s[66];
-  char signature_v;
+  signed char signature_v;
   char error_message[256];
 };
 

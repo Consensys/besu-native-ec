@@ -279,7 +279,7 @@ int calculate_signature_v(struct sign_result *result, const char data_hash[],
 
     if (memcmp(public_key_data, recovery_result.public_key, public_key_len) ==
         0) {
-      result->signature_v = (char)i;
+      result->signature_v = (signed char)i;
       break;
     }
   }
