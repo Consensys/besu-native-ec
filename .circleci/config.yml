@@ -3,7 +3,7 @@ version: 2.1
 executors:
   standard:
     docker:
-      - image: cimg/base:2021.05 
+      - image: cimg/base:2024.05
 
 jobs:
   check-code-format:
