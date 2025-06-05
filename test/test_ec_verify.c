@@ -64,9 +64,16 @@ void p256_verify_should_verify_signatures_according_to_test_vectors(void) {
       TEST_FAIL_MESSAGE("Hashing not successful");
     }
 
+    // canonical signature required verify:
     struct verify_result result =
         p256_verify((const char *)md_value, md_value_len, signature_r_bin,
                     signature_s_bin, (const char *)public_key_bin);
+
+    // malleable signature verify (canonicalization ignored)
+    struct verify_result malleable_result =
+        p256_verify_malleable_signature((const char *)md_value, md_value_len,
+                                    signature_r_bin, signature_s_bin,
+                                    (const char *)public_key_bin);
 
     TEST_ASSERT_EQUAL_INT(test_vectors[i].result, result.verified);
 
@@ -75,8 +82,13 @@ void p256_verify_should_verify_signatures_according_to_test_vectors(void) {
           "Signature is not canonicalized. s of signature must not be greater "
           "than n / 2: : error:00000000:lib(0)::reason(0)\n",
           result.error_message);
+      // assert malleability did not cause verification error :
+      TEST_ASSERT_EQUAL_STRING("", malleable_result.error_message);
     } else {
       TEST_ASSERT_EQUAL_STRING("", result.error_message);
+      // assert malleable expected result
+      TEST_ASSERT_EQUAL_INT(test_vectors[i].result, malleable_result.verified);
+      TEST_ASSERT_EQUAL_STRING("", malleable_result.error_message);
     }
 
     free(data_bin);
