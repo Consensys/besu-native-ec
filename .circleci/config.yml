@@ -5,11 +5,24 @@ executors:
     docker:
       - image: cimg/base:2021.05 
 
+commands:
+  checkout-via-https:
+    description: Checkout repo at $CIRCLE_SHA1 using HTTPS instead of SSH
+    steps:
+      - run:
+          name: Checkout via HTTPS
+          command: |
+            echo "Cloning repository via HTTPS..."
+            git clone https://github.com/Consensys/besu-native-ec.git .
+            echo "Fetching and checking out commit $CIRCLE_SHA1"
+            git fetch --depth=1 origin $CIRCLE_SHA1
+            git checkout $CIRCLE_SHA1
+
 jobs:
   check-code-format:
     executor: standard
     steps:
-      - checkout
+      - checkout-via-https
       - run:
           name: Install dependencies
           command: |
@@ -29,7 +42,7 @@ jobs:
           command: |
             sudo apt-get update
             sudo apt-get -y install build-essential automake autoconf libtool patchelf
-      - checkout
+      - checkout-via-https
       - run: git submodule init
       - run: git submodule update
       - run:
@@ -57,7 +70,7 @@ jobs:
   check-memory-leaks:
     executor: standard
     steps:
-      - checkout
+      - checkout-via-https
       - attach_workspace:
           at: build
       - run:
