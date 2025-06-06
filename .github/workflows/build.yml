@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check-code-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install clang-format
+
+      - name: Check code formatting
+        run: |
+          cd src && clang-format --dry-run --Werror *.c *.h
+          cd ../test && clang-format --dry-run --Werror *.c
+
+  build:
+    runs-on: ubuntu-latest
+    needs: check-code-format
+    steps:
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install build-essential automake autoconf libtool patchelf
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize submodules
+        run: git submodule init
+
+      - name: Update submodules
+        run: git submodule update
+
+      - name: Build OpenSSL
+        run: |
+          cd openssl
+          ./Configure enable-ec_nistp_64_gcc_128 no-stdio no-ocsp no-nextprotoneg no-module \
+                      no-legacy no-gost no-engine no-dynamic-engine no-deprecated no-comp \
+                      no-cmp no-capieng no-ui-console no-tls no-ssl no-dtls no-aria no-bf \
+                      no-blake2 no-camellia no-cast no-chacha no-cmac no-des no-dh no-dsa \
+                      no-ecdh no-idea no-md4 no-mdc2 no-ocb no-poly1305 no-rc2 no-rc4 no-rmd160 \
+                      no-scrypt no-seed no-siphash no-siv no-sm2 no-sm3 no-sm4 no-whirlpool
+          make build_generated libcrypto.so
+          cd ../
+
+      - name: Build project
+        run: make
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            build/test_*.out
+            build/libs
+
+  check-memory-leaks:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: build
+
+      - name: Install valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install valgrind
+
+      - name: Check for memory leaks
+        run: |
+          ls build/test_*.out | xargs -n 1 valgrind --leak-check=full --error-exitcode=255
+
