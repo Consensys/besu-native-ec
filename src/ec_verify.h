@@ -15,8 +15,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #pragma once
 
@@ -28,14 +28,13 @@ struct verify_result verify(const char data_hash[], const int data_hash_length,
                             const char signature_r_hex[],
                             const char signature_s_hex[],
                             const char public_key_data[], int public_key_len,
-                            const char *group_name, int curve_nid, bool allow_malleable_signature);
+                            const char *group_name, int curve_nid,
+                            bool allow_malleable_signature);
 
-struct verify_result p256_verify_malleable_signature(const char data_hash[],
-                                                 const int data_hash_length,
-                                                 const char signature_r_hex[],
-                                                 const char signature_s_hex[],
-                                                 const char public_key_data[]);
-
+struct verify_result p256_verify_malleable_signature(
+    const char data_hash[], const int data_hash_length,
+    const char signature_r_hex[], const char signature_s_hex[],
+    const char public_key_data[]);
 
 int create_der_encoded_signature(unsigned char **der_encoded_signature,
                                  int *der_encoded_signature_len,

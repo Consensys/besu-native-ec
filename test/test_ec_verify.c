@@ -70,10 +70,9 @@ void p256_verify_should_verify_signatures_according_to_test_vectors(void) {
                     signature_s_bin, (const char *)public_key_bin);
 
     // malleable signature verify (canonicalization ignored)
-    struct verify_result malleable_result =
-        p256_verify_malleable_signature((const char *)md_value, md_value_len,
-                                    signature_r_bin, signature_s_bin,
-                                    (const char *)public_key_bin);
+    struct verify_result malleable_result = p256_verify_malleable_signature(
+        (const char *)md_value, md_value_len, signature_r_bin, signature_s_bin,
+        (const char *)public_key_bin);
 
     TEST_ASSERT_EQUAL_INT(test_vectors[i].result, result.verified);
 

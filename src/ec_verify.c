@@ -15,8 +15,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "openssl/include/openssl/ec.h"
 #include "openssl/include/openssl/evp.h"
@@ -39,17 +39,15 @@ struct verify_result p256_verify(const char data_hash[],
                 NID_X9_62_prime256v1, false);
 }
 
-struct verify_result p256_verify_malleable_signature(const char data_hash[],
-                                                 const int data_hash_length,
-                                                 const char signature_r_hex[],
-                                                 const char signature_s_hex[],
-                                                 const char public_key_data[]) {
+struct verify_result p256_verify_malleable_signature(
+    const char data_hash[], const int data_hash_length,
+    const char signature_r_hex[], const char signature_s_hex[],
+    const char public_key_data[]) {
   static const uint8_t P256_PUBLIC_KEY_LENGTH = 64;
 
-  return verify(data_hash, data_hash_length,
-                signature_r_hex, signature_s_hex,
-                public_key_data, P256_PUBLIC_KEY_LENGTH,
-                "prime256v1", NID_X9_62_prime256v1, true);
+  return verify(data_hash, data_hash_length, signature_r_hex, signature_s_hex,
+                public_key_data, P256_PUBLIC_KEY_LENGTH, "prime256v1",
+                NID_X9_62_prime256v1, true);
 }
 
 struct verify_result verify(const char data_hash[], const int data_hash_length,
@@ -68,7 +66,8 @@ struct verify_result verify(const char data_hash[], const int data_hash_length,
   int signature_arr_len = public_key_len / 2;
   int is_canonicalized = 0;
 
-  if (!allow_malleable_signature && (is_canonicalized = is_signature_canonicalized(
+  if (!allow_malleable_signature &&
+      (is_canonicalized = is_signature_canonicalized(
            signature_s_arr, signature_arr_len, curve_nid,
            result.error_message)) == GENERIC_ERROR) {
     goto end;
