@@ -53,7 +53,7 @@ LINK_TEST=gcc -L$(PATHL) -Wl,-rpath $(PATHL)
 # this is used for the  besu_native_ec library release. The crypto library will be in the same folder as it,
 # because they are shipped later in a jar file together
 LINK_RELEASE=gcc -L$(PATHL) -Wl,-rpath ./
-COMPILE_FLAGS=-I. -I$(PATHU) -I$(PATHS) -I$(PATH_OPENSSL_INCLUDE) -DTEST
+COMPILE_FLAGS=-I. -I$(PATHU) -I$(PATHS) -I$(PATH_OPENSSL_INCLUDE) -DTEST -DOPENSSL_API_COMPAT=0x10100000L -DOPENSSL_SUPPRESS_DEPRECATED -DOPENSSL_NO_DEPRECATED=0
 
 # the following commands are used to create the console output of the tests
 RESULTS = $(patsubst $(PATHT)test_%.c,$(PATHR)test_%.txt,$(SRCT) )

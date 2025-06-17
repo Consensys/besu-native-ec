@@ -17,15 +17,35 @@
  */
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "openssl/include/openssl/ec.h"
 #include "openssl/include/openssl/evp.h"
+
+#include "openssl/include/openssl/ecdsa.h"
+#include "openssl/include/openssl/obj_mac.h"
+#include "openssl/include/openssl/bn.h"
+#include "openssl/include/openssl/x509.h"
 
 #include "besu_native_ec.h"
 #include "constants.h"
 #include "ec_key.h"
 #include "ec_verify.h"
 #include "utils.h"
+
+
+
+
+// Cached EC_GROUP for P-256
+static EC_GROUP *p256_group = NULL;
+
+__attribute__((constructor))
+static void init_p256_group() {
+  if (p256_group == NULL) {
+    p256_group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+    EC_GROUP_set_asn1_flag(p256_group, OPENSSL_EC_NAMED_CURVE);
+  }
+}
 
 struct verify_result p256_verify(const char data_hash[],
                                  const int data_hash_length,
@@ -59,68 +79,86 @@ struct verify_result verify(const char data_hash[], const int data_hash_length,
   struct verify_result result = {.verified = GENERIC_ERROR,
                                  .error_message = {0}};
 
-  EVP_PKEY *key = NULL;
-  unsigned char *der_encoded_signature = NULL;
-  EVP_PKEY_CTX *verify_context = NULL;
+ // call constructor explicitly, just in case
+ init_p256_group();
 
-  int signature_arr_len = public_key_len / 2;
-  int is_canonicalized = 0;
+  EC_KEY *ec_key = NULL;
+  EC_POINT *pub_point = NULL;
+  EVP_PKEY *evp_key = NULL;
+  ECDSA_SIG *sig = NULL;
+  BIGNUM *r = NULL, *s = NULL;
+  char *r_str = NULL, *s_str = NULL;
 
   if (!allow_malleable_signature &&
-      (is_canonicalized = is_signature_canonicalized(
-           signature_s_arr, signature_arr_len, curve_nid,
-           result.error_message)) == GENERIC_ERROR) {
-    goto end;
-  }
-
-  if (!allow_malleable_signature && !is_canonicalized) {
+      is_signature_canonicalized(signature_s_arr, public_key_len / 2, curve_nid,
+                                  result.error_message) != 1) {
     set_error_message(result.error_message,
-                      "Signature is not canonicalized. s of signature must not "
-                      "be greater than n / 2: ");
+                      "Signature is not canonicalized. s of signature must not be greater than n / 2: ");
     goto end;
   }
 
-  if (create_public_key(&key, result.error_message,
-                        (const unsigned char *)public_key_data, public_key_len,
-                        group_name) != SUCCESS) {
+  r_str = hex_arr_to_str(signature_r_arr, public_key_len / 2);
+  s_str = hex_arr_to_str(signature_s_arr, public_key_len / 2);
+  if (!BN_hex2bn(&r, r_str) || !BN_hex2bn(&s, s_str)) {
+    set_error_message(result.error_message, "Failed to parse r or s from hex");
     goto end;
   }
 
-  int der_encoded_signature_len = 0;
-  if (create_der_encoded_signature(
-          &der_encoded_signature, &der_encoded_signature_len,
-          result.error_message, signature_r_arr, signature_s_arr,
-          signature_arr_len) != SUCCESS) {
+  sig = ECDSA_SIG_new();
+  if (!ECDSA_SIG_set0(sig, r, s)) {
+    set_error_message(result.error_message, "Failed to set r/s in signature");
+    BN_free(r); BN_free(s);
     goto end;
   }
+  r = s = NULL; // ownership transferred
 
-  if ((verify_context = EVP_PKEY_CTX_new(key, NULL)) == NULL) {
-    set_error_message(result.error_message,
-                      "Could not create a context for verifying: ");
-    goto end;
+  if (public_key_len == 64) {
+    ec_key = EC_KEY_new();
+    EC_KEY_set_group(ec_key, p256_group);
+
+    pub_point = EC_POINT_new(p256_group);
+    unsigned char full_key[65];
+    full_key[0] = 0x04;
+    memcpy(&full_key[1], public_key_data, 64);
+
+    if (!EC_POINT_oct2point(p256_group, pub_point, full_key, 65, NULL) ||
+        !EC_KEY_set_public_key(ec_key, pub_point)) {
+      set_error_message(result.error_message, "Failed to parse 64-byte public key");
+      goto end;
+    }
+  } else if (public_key_len == 65 && public_key_data[0] == 0x04) {
+    ec_key = EC_KEY_new();
+    EC_KEY_set_group(ec_key, p256_group);
+    pub_point = EC_POINT_new(p256_group);
+
+    if (!EC_POINT_oct2point(p256_group, pub_point, (unsigned char *)public_key_data, 65, NULL) ||
+        !EC_KEY_set_public_key(ec_key, pub_point)) {
+      set_error_message(result.error_message, "Failed to parse 65-byte SEC1 public key");
+      goto end;
+    }
+  } else {
+    const unsigned char *key_ptr = (const unsigned char *)public_key_data;
+    evp_key = d2i_PUBKEY(NULL, &key_ptr, public_key_len);
+    if (evp_key == NULL || (ec_key = EVP_PKEY_get1_EC_KEY(evp_key)) == NULL) {
+      set_error_message(result.error_message, "Failed to decode ASN.1/DER public key");
+      goto end;
+    }
   }
 
-  if (EVP_PKEY_verify_init(verify_context) != SUCCESS) {
-    set_error_message(result.error_message,
-                      "Could not initialize a context for verifying: ");
-    goto end;
-  }
-
-  // verify signature: 1 = successfully verified, 0 = not successfully verified,
-  // < 0 = error
-  result.verified = EVP_PKEY_verify(
-      verify_context, der_encoded_signature, der_encoded_signature_len,
-      (const unsigned char *)data_hash, data_hash_length);
-
+  result.verified = ECDSA_do_verify((const unsigned char *)data_hash, data_hash_length, sig, ec_key);
   if (result.verified < 0) {
-    set_error_message(result.error_message,
-                      "Error while verifying signature: ");
+    set_error_message(result.error_message, "ECDSA_do_verify() failed");
   }
 
 end:
-  OPENSSL_free(der_encoded_signature);
-  EVP_PKEY_free(key);
-  EVP_PKEY_CTX_free(verify_context);
+  free(r_str);
+  free(s_str);
+  ECDSA_SIG_free(sig);
+  EC_POINT_free(pub_point);
+  EC_KEY_free(ec_key);
+  EVP_PKEY_free(evp_key);
+  BN_free(r);
+  BN_free(s);
 
   return result;
 }
