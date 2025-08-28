@@ -877,4 +877,17 @@ struct test_vector test_vectors[] = {
          {"7e7df0c8b86f7db06caf1610166f7b9c4c75447f991d5aaf4dea720c25985c8c"},
      .hash_function_id = SHA_512,
      .result = VERIFICATION_SUCCESS},
+    // x_exceeds_n_original: R' x-coordinate exceeds N during verification
+    // Note: signature_s is non-canonicalized (s > n/2), so it should be rejected
+    {.data =
+         {"bb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023"},
+     .public_key =
+         {"0ad99500288d466940031d72a9f5445a4d43784640855bf0a69874d2de5fe103"
+          "c5011e6ef2c42dcd50d5d3d29f99ae6eba2c80c9244f4c5422f0979ff0c3ba5e"},
+     .signature_r =
+         {"000000000000000000000000000000004319055358e8617b0c46353d039cdaab"},
+     .signature_s =
+         {"ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc63254e"},
+     .hash_function_id = SHA_256,
+     .result = ERROR_NOT_CANONICALIZED},
 };
