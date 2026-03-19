@@ -115,6 +115,13 @@ $(PATHL):
 # This prevents OpenSSL symbols from leaking into the JVM process and conflicting with other native
 # libraries (e.g. SoftHSM2, cloud HSM PKCS#11 clients) that depend on system OpenSSL.
 release_build: $(PATHRO)constants.o $(PATHRO)ec_key.o $(PATHRO)ec_key_recovery.o $(PATHRO)ec_sign.o $(PATHRO)ec_verify.o $(PATHRO)utils.o
+ifeq ($(shell uname -s),Darwin)
+	echo "_p256_key_recovery\n_p256_sign\n_p256_verify\n_p256_verify_malleable_signature" > $(PATHRE)exported_symbols.txt
+	gcc -shared -fPIC \
+		-Wl,-exported_symbols_list,$(PATHRE)exported_symbols.txt \
+		$^ $(OPENSSL_STATIC_LIB) \
+		-o $(PATHRE)libbesu_native_ec.$(LIBRARY_EXTENSION)
+else
 	echo "{ global: p256_*; local: *; };" > $(PATHRE)version.script
 	gcc -shared -fPIC \
 		-Wl,-Bsymbolic \
@@ -122,6 +129,7 @@ release_build: $(PATHRO)constants.o $(PATHRO)ec_key.o $(PATHRO)ec_key_recovery.o
 		-Wl,--version-script=$(PATHRE)version.script \
 		$^ $(OPENSSL_STATIC_LIB) \
 		-o $(PATHRE)libbesu_native_ec.$(LIBRARY_EXTENSION)
+endif
 	$(COPY) src/besu_native_ec.h $(PATHRE)
 
 $(PATHRO)%.o: $(PATHS)%.c $(PATHRO) $(PATHRE)
@@ -132,7 +140,7 @@ clean:
 	$(CLEANUP) $(PATHRO)*.o
 	$(CLEANUP) $(PATHB)*.$(TEST_EXTENSION)
 	$(CLEANUP) $(PATHR)*.txt
-	$(CLEANUP) $(PATHRE)*.$(LIBRARY_EXTENSION) $(PATHRE)*.h $(PATHRE)version.script
+	$(CLEANUP) $(PATHRE)*.$(LIBRARY_EXTENSION) $(PATHRE)*.h $(PATHRE)version.script $(PATHRE)exported_symbols.txt
 	$(CLEANUP) $(PATHL)*.*
 
 .PRECIOUS: $(PATHB)test_%.$(TEST_EXTENSION)

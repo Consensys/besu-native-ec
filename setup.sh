@@ -1,13 +1,5 @@
 #!/bin/bash
 
-if [[ "$OSTYPE" == "msys" ]]; then
-	LIBRARY_EXTENSION=dll
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-  LIBRARY_EXTENSION=so
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-  LIBRARY_EXTENSION=dylib
-fi
-
 git submodule init
 git submodule update
 
