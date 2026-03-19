@@ -29,7 +29,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install build-essential automake autoconf libtool patchelf
+          sudo apt-get -y install build-essential automake autoconf libtool
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,28 +40,48 @@ jobs:
       - name: Update submodules
         run: git submodule update
 
-      - name: Build OpenSSL
+      - name: Build OpenSSL (static)
         run: |
           cd openssl
-          ./Configure enable-ec_nistp_64_gcc_128 no-stdio no-ocsp no-nextprotoneg no-module \
+          ./Configure no-shared -fPIC -fvisibility=hidden \
+                      enable-ec_nistp_64_gcc_128 no-stdio no-ocsp no-nextprotoneg no-module \
                       no-legacy no-gost no-engine no-dynamic-engine no-deprecated no-comp \
                       no-cmp no-capieng no-ui-console no-tls no-ssl no-dtls no-aria no-bf \
                       no-blake2 no-camellia no-cast no-chacha no-cmac no-des no-dh no-dsa \
                       no-ecdh no-idea no-md4 no-mdc2 no-ocb no-poly1305 no-rc2 no-rc4 no-rmd160 \
                       no-scrypt no-seed no-siphash no-siv no-sm2 no-sm3 no-sm4 no-whirlpool
-          make build_generated libcrypto.so
+          make build_generated libcrypto.a
           cd ../
 
-      - name: Build project
+      - name: Build and test
         run: make
 
-      - name: Upload build artifacts
+      - name: Build release
+        run: make release_build
+
+      - name: Verify no OpenSSL symbols exported
+        run: |
+          LEAKED=$(nm -D release/libbesu_native_ec.so | grep -c " T.*EVP_\| T.*EC_\| T.*ossl_" || true)
+          echo "Leaked OpenSSL symbols: $LEAKED"
+          if [ "$LEAKED" -gt 0 ]; then
+            echo "ERROR: OpenSSL symbols are leaking from libbesu_native_ec.so"
+            nm -D release/libbesu_native_ec.so | grep " T.*EVP_\| T.*EC_\| T.*ossl_"
+            exit 1
+          fi
+          echo "Exported symbols:"
+          nm -D release/libbesu_native_ec.so | grep " T "
+
+      - name: Upload test artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
-          path: |
-            build/test_*.out
-            build/libs
+          name: test-artifacts
+          path: build/test_*.out
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: release/libbesu_native_ec.so
 
   check-memory-leaks:
     runs-on: ubuntu-latest
@@ -70,10 +90,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
+      - name: Download test artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: test-artifacts
           path: build
 
       - name: Install valgrind
@@ -85,4 +105,3 @@ jobs:
         run: |
           chmod +x build/test_*.out
           ls build/test_*.out | xargs -n 1 valgrind --leak-check=full --error-exitcode=255
-
